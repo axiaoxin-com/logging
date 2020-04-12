@@ -164,23 +164,38 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	return logger, nil
 }
 
+// DefaultLogger return the global logger
+func DefaultLogger() *zap.Logger {
+	rwMutex.Lock()
+	defer rwMutex.Unlock()
+	copy := *logger
+	clogger := &copy
+	return clogger
+}
+
 // CloneDefaultLogger return the global logger copy which add a new name
-func CloneDefaultLogger(name string) *zap.Logger {
+func CloneDefaultLogger(name string, fields ...zap.Field) *zap.Logger {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()
 	copy := *logger
 	clogger := &copy
 	clogger = clogger.Named(name)
+	if len(fields) > 0 {
+		clogger = clogger.With(fields...)
+	}
 	return clogger
 }
 
 // CloneDefaultSLogger return the global slogger copy which add a new name
-func CloneDefaultSLogger(name string) *zap.SugaredLogger {
+func CloneDefaultSLogger(name string, args ...interface{}) *zap.SugaredLogger {
 	rwMutex.Lock()
 	defer rwMutex.Unlock()
 	copy := *slogger
 	cslogger := &copy
 	cslogger = cslogger.Named(name)
+	if len(args) > 0 {
+		cslogger = cslogger.With(args...)
+	}
 	return cslogger
 }
 
@@ -189,4 +204,9 @@ func AttachCore(l *zap.Logger, c zapcore.Core) *zap.Logger {
 	return l.WithOptions(zap.WrapCore(func(core zapcore.Core) zapcore.Core {
 		return zapcore.NewTee(core, c)
 	}))
+}
+
+// DefaultInitialFields return defaultInitialFields
+func DefaultInitialFields() map[string]interface{} {
+	return defaultInitialFields
 }
