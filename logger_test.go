@@ -1,15 +1,16 @@
 package logging
 
 import (
+	"reflect"
 	"testing"
 )
 
 func TestInit(t *testing.T) {
-	if Logger == nil {
-		t.Error("Logger is nil")
+	if logger == nil {
+		t.Error("logger is nil")
 	}
-	if SLogger == nil {
-		t.Error("SLogger is nil")
+	if slogger == nil {
+		t.Error("slogger is nil")
 	}
 }
 
@@ -28,7 +29,7 @@ func TestNewLogger(t *testing.T) {
 	dsn := "sentrydsn"
 	sc, err := GetSentryClientByDSN(dsn, true)
 	if err != nil {
-		t.Error("TestNewLogger GetSentryClientByDSN err", err)
+		// t.Error("TestNewLogger GetSentryClientByDSN err", err)
 	}
 	options := Options{
 		Name:              "tlogger",
@@ -48,12 +49,23 @@ func TestNewLogger(t *testing.T) {
 	logger.Error("TestNewLogger Error")
 }
 
-func TestCloneLogger(t *testing.T) {
-	logger := CloneLogger("cloned")
-	logger.Info("TestCloneLogger Info")
+func TestCloneDefaultLogger(t *testing.T) {
+	nlogger := CloneDefaultLogger("cloned")
+	if reflect.DeepEqual(nlogger, logger) {
+		t.Error("CloneDefaultLogger should not be default logger")
+	}
+	if &nlogger == &logger {
+		t.Error("CloneDefaultLogger should not be default logger")
+	}
 }
 
-func TestCloneSLogger(t *testing.T) {
-	logger := CloneSLogger("cloned-slogger")
-	logger.Info("TestCloneSLogger Info")
+func TestCloneDefaultSLogger(t *testing.T) {
+	nlogger := CloneDefaultSLogger("cloned-slogger")
+	nlogger.Info("TestCloneDefaultSLogger Info")
+	if reflect.DeepEqual(nlogger, logger) {
+		t.Error("CloneDefaultLogger should not be default logger")
+	}
+	if &nlogger == &logger {
+		t.Error("CloneDefaultLogger should not be default logger")
+	}
 }

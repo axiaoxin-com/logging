@@ -53,11 +53,11 @@ func TestCtxLoggerDefaultLoggerWithField(t *testing.T) {
 	c := &gin.Context{}
 
 	SetCtxLogger(c, "rid")
-	logger := CtxLogger(c, zap.String("myfield", "xxx"))
-	if logger == nil {
+	ctxlogger := CtxLogger(c, zap.String("myfield", "xxx"))
+	if ctxlogger == nil {
 		t.Fatal("context also must should return a logger")
 	}
-	if logger == Logger {
+	if ctxlogger == logger {
 		t.Fatal("with field will get a logger")
 	}
 	logger.Info("this is a logger from default logger with field")

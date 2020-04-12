@@ -31,7 +31,7 @@ func CtxLogger(c context.Context, fields ...zap.Field) *zap.Logger {
 	if ctxLoggerItf != nil {
 		ctxLogger = ctxLoggerItf.(*zap.Logger).Named(CtxLoggerKey)
 	} else {
-		ctxLogger = CloneLogger(CtxLoggerKey)
+		ctxLogger = CloneDefaultLogger(CtxLoggerKey)
 		Debug("no ctxLogger in context, clone the global Logger as ctxLogger")
 	}
 	if len(fields) > 0 {
