@@ -1,8 +1,13 @@
 package logging
 
 import (
+	"io/ioutil"
+	"net/http"
 	"reflect"
+	"strings"
 	"testing"
+
+	"go.uber.org/zap"
 )
 
 func TestInit(t *testing.T) {
@@ -31,9 +36,10 @@ func TestNewLogger(t *testing.T) {
 	if err != nil {
 		// t.Error("TestNewLogger GetSentryClientByDSN err", err)
 	}
+	level := zap.NewAtomicLevelAt(zap.DebugLevel)
 	options := Options{
 		Name:              "tlogger",
-		Level:             "debug",
+		Level:             level,
 		Format:            "json",
 		OutputPaths:       []string{"stderr"},
 		InitialFields:     map[string]interface{}{"service_name": "testing"},
@@ -65,7 +71,49 @@ func TestCloneDefaultSLogger(t *testing.T) {
 	if reflect.DeepEqual(nlogger, logger) {
 		t.Error("CloneDefaultLogger should not be default logger")
 	}
-	if &nlogger == &logger {
+	if *nlogger == *slogger {
 		t.Error("CloneDefaultLogger should not be default logger")
 	}
+}
+
+func TestSetLevel(t *testing.T) {
+	logger.Debug("TestChangeLevel raw debug level")
+	t.Log("current level:", defaultLevel.Level())
+	defaultLevel.SetLevel(zap.InfoLevel)
+	t.Log("new level:", defaultLevel.Level())
+	logger.Debug("TestChangeLevel raw debug level should not be logged")
+	// reset
+	defaultLevel.SetLevel(zap.DebugLevel)
+}
+
+func TestHTTPSetLevel(t *testing.T) {
+	// query level
+	url := "http://localhost" + defaultAtomicLevelAddr
+	logger.Debug("TestChangeLevel raw debug level")
+	resp, err := http.Get(url)
+	if err != nil {
+		t.Error(err)
+	}
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Error(err)
+	}
+	defer resp.Body.Close()
+	t.Log("current level:", string(content))
+
+	// set level
+	c := &http.Client{}
+	req, _ := http.NewRequest("PUT", url, strings.NewReader(`{"level": "info"}`))
+	resp, err = c.Do(req)
+	if err != nil {
+		t.Error(err)
+	}
+	content, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Error(err)
+	}
+	defer resp.Body.Close()
+	t.Log("current level:", string(content))
+
+	logger.Debug("TestChangeLevel raw debug level should not be logged")
 }

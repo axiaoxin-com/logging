@@ -2,6 +2,7 @@ package logging
 
 import (
 	"log"
+	"net/http"
 	"strings"
 	"sync"
 	"syscall"
@@ -24,21 +25,49 @@ var (
 	}
 	// defaultLoggerName 默认logger name为root
 	defaultLoggerName = "root"
+	// defaultLevel 默认日志级别为debug
+	defaultLevel           = zap.NewAtomicLevelAt(zap.DebugLevel)
+	defaultAtomicLevelAddr = ":1903"
 	// lock for global var
 	rwMutex sync.RWMutex
+
+	// TextLevelMap string level mapping zap AtomicLevel
+	TextLevelMap = map[string]zap.AtomicLevel{
+		"debug":  zap.NewAtomicLevelAt(zap.DebugLevel),
+		"info":   zap.NewAtomicLevelAt(zap.InfoLevel),
+		"warn":   zap.NewAtomicLevelAt(zap.WarnLevel),
+		"error":  zap.NewAtomicLevelAt(zap.ErrorLevel),
+		"dpanic": zap.NewAtomicLevelAt(zap.DPanicLevel),
+		"panic":  zap.NewAtomicLevelAt(zap.PanicLevel),
+		"fatal":  zap.NewAtomicLevelAt(zap.FatalLevel),
+	}
 )
+
+// Options new logger options
+type Options struct {
+	Name              string                 // logger 名称
+	Level             zap.AtomicLevel        // 日志级别
+	Format            string                 // 日志格式
+	OutputPaths       []string               // 日志输出位置
+	InitialFields     map[string]interface{} // 日志初始字段
+	DisableCaller     bool                   // 是否关闭打印caller
+	DisableStacktrace bool                   // 是否关闭打印stackstrace
+	SentryClient      *sentry.Client         // sentry客户端
+	AtomicLevelAddr   string                 // http动态修改日志级别的地址，传空不启用
+}
 
 // init the global default logger
 func init() {
 	options := Options{
 		Name:              defaultLoggerName,
-		Level:             "debug",
+		Level:             defaultLevel,
 		Format:            "json",
 		OutputPaths:       defaultOutPaths,
 		InitialFields:     defaultInitialFields,
 		DisableCaller:     false,
 		DisableStacktrace: false,
 		SentryClient:      nil,
+		AtomicLevelAddr:   defaultAtomicLevelAddr,
 	}
 	var err error
 	logger, err = NewLogger(options)
@@ -48,39 +77,15 @@ func init() {
 	slogger = logger.Sugar()
 }
 
-// Options new logger options
-type Options struct {
-	Name              string                 // logger 名称
-	Level             string                 // 日志级别
-	Format            string                 // 日志格式
-	OutputPaths       []string               // 日志输出位置
-	InitialFields     map[string]interface{} // 日志初始字段
-	DisableCaller     bool                   // 是否关闭打印caller
-	DisableStacktrace bool                   // 是否关闭打印stackstrace
-	SentryClient      *sentry.Client         // sentry客户端
-}
-
 // NewLogger return a zap Logger instance
 func NewLogger(options Options) (*zap.Logger, error) {
 	cfg := zap.Config{}
-	// 设置level 默认为debug
-	switch strings.ToLower(options.Level) {
-	case "debug":
-		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
-	case "info":
-		cfg.Level = zap.NewAtomicLevelAt(zap.InfoLevel)
-	case "warn":
-		cfg.Level = zap.NewAtomicLevelAt(zap.WarnLevel)
-	case "error":
-		cfg.Level = zap.NewAtomicLevelAt(zap.ErrorLevel)
-	case "dpanic":
-		cfg.Level = zap.NewAtomicLevelAt(zap.DPanicLevel)
-	case "panic":
-		cfg.Level = zap.NewAtomicLevelAt(zap.PanicLevel)
-	case "fatal":
-		cfg.Level = zap.NewAtomicLevelAt(zap.FatalLevel)
-	default:
-		cfg.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+	// 设置日志级别
+	emptyAtomicLevel := zap.AtomicLevel{}
+	if options.Level == emptyAtomicLevel {
+		cfg.Level = defaultLevel
+	} else {
+		cfg.Level = options.Level
 	}
 	// 设置encoding 默认为json
 	if strings.ToLower(options.Format) == "console" {
@@ -144,6 +149,17 @@ func NewLogger(options Options) (*zap.Logger, error) {
 		logger = logger.Named(options.Name)
 	} else {
 		logger = logger.Named(defaultLoggerName)
+	}
+	if options.AtomicLevelAddr != "" {
+		go func() {
+			// curl -X GET localhost:1903
+			// curl -X PUT localhost:1903 -d '{"level":"info"}'
+			levelServer := http.NewServeMux()
+			levelServer.Handle("/", defaultLevel)
+			if err := http.ListenAndServe(options.AtomicLevelAddr, levelServer); err != nil {
+				Error("logging NewLogger levelServer ListenAndServe error", zap.Error(err))
+			}
+		}()
 	}
 	return logger, nil
 }
