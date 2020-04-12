@@ -1,4 +1,5 @@
-// Package logging provides ...
+// 开箱即用的方法
+
 package logging
 
 import "go.uber.org/zap"

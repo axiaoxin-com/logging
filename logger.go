@@ -1,3 +1,12 @@
+// Package logging 简单封装了在日常使用 zap 打日志时的常用方法。
+//
+// 提供快速使用 zap 打印日志的全部方法，所有日志打印方法开箱即用
+//
+// 提供多种快速创建 logger 的方法
+//
+// 支持在使用 Error 及其以上级别打印日志时自动将该事件上报到 Sentry
+//
+// 支持从 context.Context/gin.Context 中创建、获取带有 Trace ID 的 logger
 package logging
 
 import (
