@@ -31,19 +31,19 @@ import "github.com/axiaoxin-com/logging"
 
 // 等同于 *zap.Logger 的 Debug
 logging.Debug("Debug message", zap.Int("intType", 123), zap.Bool("boolType", false), zap.Ints("sliceInt", []int{1, 2, 3}), zap.Reflect("map", map[string]interface{}{"i": 1, "s": "s"}))
-// {"level":"DEBUG","time":"2020-04-12T02:56:39.32688+08:00","logger":"root","caller":"logging/global.go:120","msg":"Debug message","pid":27907,"intType":123,"boolType":false,"sliceInt":[1,2,3],"map":{"i":1,"s":"s"}}
+// {"level":"DEBUG","time":"2020-04-12T02:56:39.32688+08:00","logger":"root","msg":"Debug message","pid":27907,"intType":123,"boolType":false,"sliceInt":[1,2,3],"map":{"i":1,"s":"s"}}
 
 // 等同于 *zap.Logger.Sugar().Debug
 logging.Debugs("SDebug message", 123, false, []int{1, 2, 3}, map[string]interface{}{"i": 1, "s": "s"})
-// {"level":"DEBUG","time":"2020-04-12T02:56:39.327239+08:00","logger":"root","caller":"logging/global.go:10","msg":"SDebug message123 false [1 2 3] map[i:1 s:s]","pid":27907}
+// {"level":"DEBUG","time":"2020-04-12T02:56:39.327239+08:00","logger":"root","msg":"SDebug message123 false [1 2 3] map[i:1 s:s]","pid":27907}
 
 // 等同于 *zap.Logger.Sugar().Debugf
 logging.Debugf("SDebugf message, %s", "ok")
-//{"level":"DEBUG","time":"2020-04-12T02:56:39.327287+08:00","logger":"root","caller":"logging/global.go:47","msg":"SDebugf message, ok","pid":27907}
+//{"level":"DEBUG","time":"2020-04-12T02:56:39.327287+08:00","logger":"root","msg":"SDebugf message, ok","pid":27907}
 
 // 等同于 *zap.Logger.Sugar().Debugw
 logging.Debugw("SDebug message", "name", "axiaoxin", "age", 18)
-//{"level":"DEBUG","time":"2020-04-12T02:56:39.327301+08:00","logger":"root","caller":"logging/global.go:84","msg":"SDebug message","pid":27907,"name":"axiaoxin","age":18}
+//{"level":"DEBUG","time":"2020-04-12T02:56:39.327301+08:00","logger":"root","msg":"SDebug message","pid":27907,"name":"axiaoxin","age":18}
 ```
 ## 快速创建你的 Logger
 
@@ -109,7 +109,7 @@ logger := logging.CloneDefaultLogger("subname", zap.String("str_field", "field_v
 
 logger.Debug("CloneDefaultLogger Debug")
 
-// {"level":"DEBUG","time":"2020-04-13T00:20:36.614438+08:00","logger":"root.subname","caller":"example/logging.go:27","msg":"CloneDefaultLogger Debug","pid":54273,"str_field":"field_value"}
+// {"level":"DEBUG","time":"2020-04-13T00:20:36.614438+08:00","logger":"root.subname","msg":"CloneDefaultLogger Debug","pid":54273,"str_field":"field_value"}
 ```
 
 初始字段可以不传，克隆的 logger 名称会是 root.subname，该 logger 打印的日志都会带上传入的字段
@@ -123,7 +123,7 @@ logger := logging.CloneDefaultSLogger("subname", "foo", 123, zap.String("str_fie
 
 logger.Debug("CloneDefaultSLogger Debug")
 
-// {"level":"DEBUG","time":"2020-04-13T00:24:41.629175+08:00","logger":"root.subname","caller":"example/logging.go:32","msg":"CloneDefaultSLogger Debug","pid":73087,"foo":123,"str_field":"field_value"}
+// {"level":"DEBUG","time":"2020-04-13T00:24:41.629175+08:00","logger":"root.subname","msg":"CloneDefaultSLogger Debug","pid":73087,"foo":123,"str_field":"field_value"}
 ```
 
 初始字段可以不传，克隆的 sugared logger 名称会是 root.subname，添加的初始字段则该 logger 打印的日志都会带上传入的字段
@@ -152,8 +152,8 @@ ctxlogger = logging.CtxLogger(ctx)
 ctxlogger.Debug("ctxlogger with trace id debug")
 
 // Output:
-// {"level":"DEBUG","time":"2020-04-13T01:34:19.697443+08:00","logger":"root","caller":"logging/global.go:120","msg":"no logger in context, clone the default logger as ctxLogger","pid":88649}
-// {"level":"DEBUG","time":"2020-04-13T01:34:19.697453+08:00","logger":"root.ctxLogger","caller":"example/main.go:51","msg":"ctxlogger with trace id debug","pid":88649,"traceID":"logging-bq9l26ript35kicii5tg"}
+// {"level":"DEBUG","time":"2020-04-13T01:34:19.697443+08:00","logger":"root","msg":"no logger in context, clone the default logger as ctxLogger","pid":88649}
+// {"level":"DEBUG","time":"2020-04-13T01:34:19.697453+08:00","logger":"root.ctxLogger","msg":"ctxlogger with trace id debug","pid":88649,"traceID":"logging-bq9l26ript35kicii5tg"}
 ```
 
 **示例2**: gin 使用 CtxLogger 打印带 Trace ID 的日志
@@ -199,12 +199,12 @@ func main() {
 
 请求日志：
 ```json
-{"level":"DEBUG","time":"2020-04-13T03:22:34.86741+08:00","logger":"root","caller":"logging/global.go:120","msg":"context dose not exist trace id key, generate a new trace id","pid":82451}
-{"level":"DEBUG","time":"2020-04-13T03:22:34.867633+08:00","logger":"root","caller":"logging/global.go:120","msg":"no logger in context, clone the default logger as ctxLogger","pid":82451}
-{"level":"INFO","time":"2020-04-13T03:22:34.867649+08:00","logger":"root.ctxLogger","caller":"example/gin.go:30","msg":"ping ping pong pong","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
-{"level":"INFO","time":"2020-04-13T03:22:34.86766+08:00","logger":"root.ctxLogger","caller":"example/gin.go:11","msg":"func1 will call func2","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
-{"level":"INFO","time":"2020-04-13T03:22:34.867668+08:00","logger":"root.ctxLogger","caller":"example/gin.go:16","msg":"func2 will call func3","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
-{"level":"INFO","time":"2020-04-13T03:22:34.867674+08:00","logger":"root.ctxLogger","caller":"example/gin.go:21","msg":"func3 be called","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
+{"level":"DEBUG","time":"2020-04-13T03:22:34.86741+08:00","logger":"root","msg":"context dose not exist trace id key, generate a new trace id","pid":82451}
+{"level":"DEBUG","time":"2020-04-13T03:22:34.867633+08:00","logger":"root","msg":"no logger in context, clone the default logger as ctxLogger","pid":82451}
+{"level":"INFO","time":"2020-04-13T03:22:34.867649+08:00","logger":"root.ctxLogger","msg":"ping ping pong pong","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
+{"level":"INFO","time":"2020-04-13T03:22:34.86766+08:00","logger":"root.ctxLogger","msg":"func1 will call func2","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
+{"level":"INFO","time":"2020-04-13T03:22:34.867668+08:00","logger":"root.ctxLogger","msg":"func2 will call func3","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
+{"level":"INFO","time":"2020-04-13T03:22:34.867674+08:00","logger":"root.ctxLogger","msg":"func3 be called","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
 ```
 
 请求响应头中也包含 Trace ID：

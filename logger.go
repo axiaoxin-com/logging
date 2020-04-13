@@ -86,7 +86,7 @@ func init() {
 		Format:            "json",
 		OutputPaths:       defaultOutPaths,
 		InitialFields:     defaultInitialFields,
-		DisableCaller:     false,
+		DisableCaller:     true,
 		DisableStacktrace: false,
 		SentryClient:      nil,
 		AtomicLevelAddr:   defaultAtomicLevelAddr,
