@@ -96,8 +96,9 @@ func init() {
 	logger, err = NewLogger(options)
 	if err != nil {
 		log.Println(err)
+	} else {
+		slogger = logger.Sugar()
 	}
-	slogger = logger.Sugar()
 }
 
 // NewLogger return a zap Logger instance
@@ -183,6 +184,13 @@ func DefaultLogger() *zap.Logger {
 	copy := *logger
 	clogger := &copy
 	return clogger
+}
+
+// DefaultSLogger return the global slogger
+func DefaultSLogger() *zap.SugaredLogger {
+	copy := *slogger
+	cslogger := &copy
+	return cslogger
 }
 
 // CloneDefaultLogger return the global logger copy which add a new name

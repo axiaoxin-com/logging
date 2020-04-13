@@ -2,13 +2,14 @@
 
 logging 简单封装了在日常使用 [zap](https://github.com/uber-go/zap) 打日志时的常用方法。
 
-- 提供快速使用 zap 打印日志的全部方法，所有日志打印方法开箱即用
+- 提供快速使用 zap 打印日志的方法，除 zap 的 DPanic、DPanicf 方法外所有日志打印方法开箱即用
 - 提供多种快速创建 logger 的方法
 - 支持在使用 Error 及其以上级别打印日志时自动将该事件上报到 Sentry
 - 支持从 context.Context/gin.Context 中创建、获取带有 Trace ID 的 logger
 - 支持动态调整日志级别，无需修改配置、重启服务
 - 支持自定义 logger EncoderConfig 字段名
 
+logging 只提供 zap 使用时的常用方法汇总，不是对 zap 进行二次开发，拒绝过度封装。
 
 ## 安装
 
@@ -19,6 +20,7 @@ go get -u github/axiaoxin-com/logging
 ## 开箱即用
 
 logging 提供的开箱即用方法都是使用自身默认 logger 和 sugared logger 打印，
+在 logging 被 import 时，会生成内部使用的默认 logger，
 默认 logger 使用 JSON 格式打印日志内容到 stderr ，
 不带 Sentry 上报功能，
 可通过 HTTP 调用 `curl -XPUT "http://localhost:1903" -d '{"level": "info"}'` 动态修改日志级别，
@@ -49,6 +51,16 @@ logging.Debugw("SDebug message", "name", "axiaoxin", "age", 18)
 
 logging 提供多种方式快速获取一个 logger 来打印日志
 
+**示例0**：快速获取默认 logger
+
+```golang
+import "github.com/axiaoxin-com/logging"
+
+// 使用 logging 提供的方法获取默认 logger
+logger := logging.DefaultLogger()
+// 使用 logging 提供的方法获取默认 slogger
+slogger := logging.DefaultSLogger()
+```
 
 **示例1**：创建一个 logging 自身使用的默认 logger，并设置 sentry 上报错误
 
