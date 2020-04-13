@@ -12,6 +12,7 @@ package logging
 import (
 	"log"
 	"net/http"
+	"reflect"
 	"strings"
 	"sync"
 	"syscall"
@@ -39,6 +40,20 @@ var (
 	defaultAtomicLevelAddr = ":1903"
 	// lock for global var
 	rwMutex sync.RWMutex
+	// defaultEncoderConfig 默认的日志字段名配置
+	defaultEncoderConfig = zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalLevelEncoder,
+		EncodeTime:     zapcore.RFC3339NanoTimeEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	}
 
 	// TextLevelMap string level mapping zap AtomicLevel
 	TextLevelMap = map[string]zap.AtomicLevel{
@@ -63,6 +78,7 @@ type Options struct {
 	DisableStacktrace bool                   // 是否关闭打印stackstrace
 	SentryClient      *sentry.Client         // sentry客户端
 	AtomicLevelAddr   string                 // http动态修改日志级别的地址，传空不启用
+	EncoderConfig     zapcore.EncoderConfig  // 配置日志地点key的名称
 }
 
 // init the global default logger
@@ -77,6 +93,7 @@ func init() {
 		DisableStacktrace: false,
 		SentryClient:      nil,
 		AtomicLevelAddr:   defaultAtomicLevelAddr,
+		EncoderConfig:     defaultEncoderConfig,
 	}
 	var err error
 	logger, err = NewLogger(options)
@@ -90,8 +107,7 @@ func init() {
 func NewLogger(options Options) (*zap.Logger, error) {
 	cfg := zap.Config{}
 	// 设置日志级别
-	emptyAtomicLevel := zap.AtomicLevel{}
-	if options.Level == emptyAtomicLevel {
+	if options.Level == (zap.AtomicLevel{}) {
 		cfg.Level = defaultLevel
 	} else {
 		cfg.Level = options.Level
@@ -122,18 +138,10 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	cfg.DisableStacktrace = options.DisableStacktrace
 
 	// 设置encoderConfig
-	cfg.EncoderConfig = zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "msg",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalLevelEncoder,
-		EncodeTime:     zapcore.RFC3339NanoTimeEncoder,
-		EncodeDuration: zapcore.SecondsDurationEncoder,
-		EncodeCaller:   zapcore.ShortCallerEncoder,
+	if reflect.DeepEqual(options.EncoderConfig, zapcore.EncoderConfig{}) {
+		cfg.EncoderConfig = defaultEncoderConfig
+	} else {
+		cfg.EncoderConfig = options.EncoderConfig
 	}
 
 	// Sampling实现了日志的流控功能，或者叫采样配置，主要有两个配置参数，Initial和Thereafter，实现的效果是在1s的时间单位内，如果某个日志级别下同样内容的日志输出数量超过了Initial的数量，那么超过之后，每隔Thereafter的数量，才会再输出一次。是一个对日志输出的保护功能。

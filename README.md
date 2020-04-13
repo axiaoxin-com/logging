@@ -6,6 +6,8 @@ logging 简单封装了在日常使用 [zap](https://github.com/uber-go/zap) 打
 - 提供多种快速创建 logger 的方法
 - 支持在使用 Error 及其以上级别打印日志时自动将该事件上报到 Sentry
 - 支持从 context.Context/gin.Context 中创建、获取带有 Trace ID 的 logger
+- 支持动态调整日志级别，无需修改配置、重启服务
+- 支持自定义 logger encoder 字段名
 
 
 ## 安装
@@ -225,4 +227,34 @@ curl localhost:8080/ping -v
 <
 * Connection #0 to host localhost left intact
 pong* Closing connection 0
+```
+
+## 自定义 logger encoder 字段名
+
+```
+import "github.com/axiaoxin-com/logging"
+
+options := logging.Options{
+    Name: "apiserver",
+    EncoderConfig: zapcore.EncoderConfig{
+        TimeKey:        "LogTime",
+        LevelKey:       "LogLevel",
+        NameKey:        "ServiceName",
+        CallerKey:      "LogLine",
+        MessageKey:     "Message",
+        StacktraceKey:  "Stacktrace",
+        LineEnding:     zapcore.DefaultLineEnding,
+        EncodeLevel:    zapcore.CapitalLevelEncoder,
+        EncodeTime:     zapcore.RFC3339NanoTimeEncoder,
+        EncodeDuration: zapcore.SecondsDurationEncoder,
+        EncodeCaller:   zapcore.ShortCallerEncoder,
+    },
+}
+logger, _ = logging.NewLogger(options)
+logger.Debug("EncoderConfig Debug", zap.Reflect("Tags", map[string]interface{}{
+    "Status":     "200 OK",
+    "StatusCode": 200,
+    "Latency":    0.075,
+}))
+// {"LogLevel":"DEBUG","LogTime":"2020-04-13T14:51:39.478605+08:00","ServiceName":"apiserver","LogLine":"example/logging.go:72","Message":"EncoderConfig Debug","pid":50014,"Tags":{"Latency":0.075,"Status":"200 OK","StatusCode":200}}
 ```
