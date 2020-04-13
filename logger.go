@@ -169,7 +169,7 @@ func NewLogger(options Options) (*zap.Logger, error) {
 			// curl -X GET localhost:1903
 			// curl -X PUT localhost:1903 -d '{"level":"info"}'
 			levelServer := http.NewServeMux()
-			levelServer.Handle("/", defaultLevel)
+			levelServer.Handle("/", cfg.Level)
 			if err := http.ListenAndServe(options.AtomicLevelAddr, levelServer); err != nil {
 				Error("logging NewLogger levelServer ListenAndServe error", zap.Error(err))
 			}
@@ -217,4 +217,9 @@ func AttachCore(l *zap.Logger, c zapcore.Core) *zap.Logger {
 // DefaultInitialFields return defaultInitialFields
 func DefaultInitialFields() map[string]interface{} {
 	return defaultInitialFields
+}
+
+// DefaultAtomicLevelAddr return defaultAtomicLevelAddr
+func DefaultAtomicLevelAddr() string {
+	return defaultAtomicLevelAddr
 }
