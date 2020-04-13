@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
-	"sync"
 	"syscall"
 
 	"github.com/getsentry/sentry-go"
@@ -38,8 +37,6 @@ var (
 	// defaultLevel 默认日志级别为debug
 	defaultLevel           = zap.NewAtomicLevelAt(zap.DebugLevel)
 	defaultAtomicLevelAddr = ":1903"
-	// lock for global var
-	rwMutex sync.RWMutex
 	// defaultEncoderConfig 默认的日志字段名配置
 	defaultEncoderConfig = zapcore.EncoderConfig{
 		TimeKey:        "time",
@@ -183,8 +180,6 @@ func NewLogger(options Options) (*zap.Logger, error) {
 
 // DefaultLogger return the global logger
 func DefaultLogger() *zap.Logger {
-	rwMutex.Lock()
-	defer rwMutex.Unlock()
 	copy := *logger
 	clogger := &copy
 	return clogger
@@ -192,8 +187,6 @@ func DefaultLogger() *zap.Logger {
 
 // CloneDefaultLogger return the global logger copy which add a new name
 func CloneDefaultLogger(name string, fields ...zap.Field) *zap.Logger {
-	rwMutex.Lock()
-	defer rwMutex.Unlock()
 	copy := *logger
 	clogger := &copy
 	clogger = clogger.Named(name)
@@ -205,8 +198,6 @@ func CloneDefaultLogger(name string, fields ...zap.Field) *zap.Logger {
 
 // CloneDefaultSLogger return the global slogger copy which add a new name
 func CloneDefaultSLogger(name string, args ...interface{}) *zap.SugaredLogger {
-	rwMutex.Lock()
-	defer rwMutex.Unlock()
 	copy := *slogger
 	cslogger := &copy
 	cslogger = cslogger.Named(name)
