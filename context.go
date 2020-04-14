@@ -1,3 +1,5 @@
+// context中不能使用global中的方法打印日志，global会调用context的方法，会陷入循环
+
 package logging
 
 import (
@@ -32,7 +34,6 @@ func CtxLogger(c context.Context, fields ...zap.Field) *zap.Logger {
 		ctxLogger = ctxLoggerItf.(*zap.Logger)
 	} else {
 		ctxLogger = CloneDefaultLogger(CtxLoggerKey)
-		Debug("no logger in context, clone the default logger as ctxLogger")
 	}
 	if len(fields) > 0 {
 		ctxLogger = ctxLogger.With(fields...)
@@ -45,18 +46,15 @@ func CtxTraceID(c context.Context) string {
 	// first get from gin context
 	if gc, ok := c.(*gin.Context); ok {
 		if traceID := gc.GetString(TraceIDKey); traceID != "" {
-			Debug("get trace id from gin.Context")
 			return traceID
 		}
 	}
 	// get from go context
 	traceIDItf := c.Value(TraceIDKey)
 	if traceIDItf != nil {
-		Debug("get trace id from context.Context")
 		return traceIDItf.(string)
 	}
 	// return default value
-	Debug("context dose not exist trace id key, generate a new trace id")
 	return "logging-" + xid.New().String()
 }
 

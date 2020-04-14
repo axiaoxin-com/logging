@@ -153,7 +153,7 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	// 注册 lumberjack sink，支持Outputs指定为文件时可以使用lumberjack对日志文件自动rotate
 	if options.LumberjackSink != nil {
 		if err := RegisterLumberjackSink(options.LumberjackSink); err != nil {
-			Error("RegisterSink error", zap.Error(err))
+			Error(nil, "RegisterSink error", zap.Error(err))
 		}
 	}
 
@@ -181,7 +181,7 @@ func NewLogger(options Options) (*zap.Logger, error) {
 			levelServer := http.NewServeMux()
 			levelServer.Handle("/", cfg.Level)
 			if err := http.ListenAndServe(options.AtomicLevelAddr, levelServer); err != nil {
-				Error("logging NewLogger levelServer ListenAndServe error", zap.Error(err))
+				Error(nil, "logging NewLogger levelServer ListenAndServe error", zap.Error(err))
 			}
 		}()
 	}

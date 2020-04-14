@@ -1,29 +1,32 @@
 package logging
 
 import (
+	"context"
 	"testing"
 
 	"go.uber.org/zap"
 )
 
 func TestGlobal(t *testing.T) {
-	Debug("Debug", zap.Int("k", 1))
-	Info("Info")
-	Warn("Warn")
-	Error("Error")
+	c := Context(context.Background(), "xxx-yyy-zzz")
+	Debug(nil, "Debug nil", zap.Int("k", 1))
+	Debug(c, "Debug", zap.Int("k", 1))
+	Info(c, "Info")
+	Warn(c, "Warn")
+	Error(c, "Error")
 
-	Debugs("SDebug")
-	Infos("SInfo")
-	Warns("SWarn")
-	Errors("SError")
+	Debugs(c, "Debugs")
+	Infos(c, "Infos")
+	Warns(c, "Warns")
+	Errors(c, "Errors")
 
-	Debugf("%s", "SDebugf")
-	Infof("%s", "SInfof")
-	Warnf("%s", "SWarnf")
-	Errorf("%s", "SErrorf")
+	Debugf(c, "%s", "Debugf")
+	Infof(c, "%s", "Infof")
+	Warnf(c, "%s", "Warnf")
+	Errorf(c, "%s", "Errorf")
 
-	Debugw("SDebugw", "k1", "v1")
-	Infow("SInfow", "k1", "v1")
-	Warnw("SWarnw", "k1", "v1")
-	Errorw("SErrorw", "k1", "v1")
+	Debugw(c, "Debugw", "k1", "v1")
+	Infow(c, "Infow", "k1", "v1")
+	Warnw(c, "Warnw", "k1", "v1")
+	Errorw(c, "Errorw", "k1", "v1")
 }

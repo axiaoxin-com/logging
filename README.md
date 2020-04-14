@@ -30,23 +30,36 @@ logging 提供的开箱即用方法都是使用自身默认 logger 和 sugared l
 **示例**
 
 ```golang
-import "github.com/axiaoxin-com/logging"
+package main
 
-// 等同于 *zap.Logger 的 Debug
-logging.Debug("Debug message", zap.Int("intType", 123), zap.Bool("boolType", false), zap.Ints("sliceInt", []int{1, 2, 3}), zap.Reflect("map", map[string]interface{}{"i": 1, "s": "s"}))
-// {"level":"DEBUG","time":"2020-04-12T02:56:39.32688+08:00","logger":"root","msg":"Debug message","pid":27907,"intType":123,"boolType":false,"sliceInt":[1,2,3],"map":{"i":1,"s":"s"}}
+import (
+	"context"
+	"github/axiaoxin-com/logging"
 
-// 等同于 *zap.Logger.Sugar().Debug
-logging.Debugs("SDebug message", 123, false, []int{1, 2, 3}, map[string]interface{}{"i": 1, "s": "s"})
-// {"level":"DEBUG","time":"2020-04-12T02:56:39.327239+08:00","logger":"root","msg":"SDebug message123 false [1 2 3] map[i:1 s:s]","pid":27907}
+	"go.uber.org/zap"
+)
 
-// 等同于 *zap.Logger.Sugar().Debugf
-logging.Debugf("SDebugf message, %s", "ok")
-//{"level":"DEBUG","time":"2020-04-12T02:56:39.327287+08:00","logger":"root","msg":"SDebugf message, ok","pid":27907}
+func main() {
+	/* zap Debug */
+	logging.Debug(nil, "Debug message", zap.Int("intType", 123), zap.Bool("boolType", false), zap.Ints("sliceInt", []int{1, 2, 3}), zap.Reflect("map", map[string]interface{}{"i": 1, "s": "s"}))
+	// {"level":"DEBUG","time":"2020-04-12T02:56:39.32688+08:00","logger":"root.ctxLogger","msg":"Debug message","pid":27907,"intType":123,"boolType":false,"sliceInt":[1,2,3],"map":{"i":1,"s":"s"}}
 
-// 等同于 *zap.Logger.Sugar().Debugw
-logging.Debugw("SDebug message", "name", "axiaoxin", "age", 18)
-//{"level":"DEBUG","time":"2020-04-12T02:56:39.327301+08:00","logger":"root","msg":"SDebug message","pid":27907,"name":"axiaoxin","age":18}
+	/* zap sugared logger Debug */
+	logging.Debugs(nil, "Debugs message", 123, false, []int{1, 2, 3}, map[string]interface{}{"i": 1, "s": "s"})
+	// {"level":"DEBUG","time":"2020-04-12T02:56:39.327239+08:00","logger":"root.ctxLogger","msg":"Debugs message123 false [1 2 3] map[i:1 s:s]","pid":27907}
+
+	/* zap sugared logger Debugf */
+	logging.Debugf(nil, "Debugf message, %s", "ok")
+	//{"level":"DEBUG","time":"2020-04-12T02:56:39.327287+08:00","logger":"root.ctxLogger","msg":"Debugf message, ok","pid":27907}
+	/* zap sugared logger Debugw */
+	logging.Debugw(nil, "Debugw message", "name", "axiaoxin", "age", 18)
+	//{"level":"DEBUG","time":"2020-04-12T02:56:39.327301+08:00","logger":"root.ctxLogger","msg":"Debugw message","pid":27907,"name":"axiaoxin","age":18}
+
+	/* with context */
+	c := logging.Context(context.Background(), "trace-id-123")
+	logging.Debug(c, "Debug with trace id")
+	// {"level":"DEBUG","time":"2020-04-14T16:16:29.404008+08:00","logger":"root.ctxLogger","msg":"Debug with trace id","pid":44559,"traceID":"trace-id-123"}
+}
 ```
 ## 快速创建你的 Logger
 
@@ -63,7 +76,7 @@ logger := logging.DefaultLogger()
 slogger := logging.DefaultSLogger()
 ```
 
-**示例1**：创建一个 logging 自身使用的默认 logger，并设置 sentry 上报错误
+**示例1**：为默认 logger 设置 sentry Error以上日志自动上报错误事件
 
 ```golang
 import "github.com/axiaoxin-com/logging"
@@ -78,7 +91,7 @@ sentryClient, _ := logging.GetSentryClientByDSN("YOUR_SENTRY_DSN")
 logger = logging.SentryAttach(logger, sentryClient)
 ```
 
-**示例2**: 使用 NewLogger 方法创建一个默认配置的 logger （不支持 sentry 和 http 动态修改日志级别）
+**示例2**: 使用 NewLogger 方法创建一个默认配置的 logger （不支持 sentry 和 http 动态修改日志级别，日志输出到stderr）
 
 ```golang
 import "github.com/axiaoxin-com/logging"
@@ -141,6 +154,16 @@ logger.Debug("CloneDefaultSLogger Debug")
 
 初始字段可以不传，克隆的 sugared logger 名称会是 root.subname，添加的初始字段则该 logger 打印的日志都会带上传入的字段
 
+**示例6**: 创建一个 CtxLogger
+
+```golang
+/* new context logger */
+ctx := context.Background()
+ctxlogger := logging.CtxLogger(ctx, zap.String("fie    ld1", "xxx"))
+ctxlogger.Debug("ctxlogger debug")
+// {"level":"DEBUG","time":"2020-04-13T14:52:29.00566+08:00","logger":"root.ctxLogger","msg":"ctxlogger debug","pid":53998,"field1":"xxx"}
+ ```
+
 
 ## 带 Trace ID 的 CtxLogger
 
@@ -148,28 +171,36 @@ logger.Debug("CloneDefaultSLogger Debug")
 后续函数在内部打印日志时从 Context 中获取带有本次调用 trace id 的 logger 来打印日志几个进行调用链路跟踪。
 
 
-**示例1**: 普通函数中使用 CtxLogger
+**示例1**: 普通函数中打印打印带 Trace ID 的日志
 
 ```golang
-import "github.com/axiaoxin-com/logging"
+package main
 
-// 初始化一个 context
-ctx := context.Background()
-// 生成一个 trace id，如果 context 是 gin.Context，会尝试从其中获取，否则尝试从 context.Context 获取，获取不到则新生成
-traceID := logging.CtxTraceID(ctx)
-// 设置 trace id 到 context 中， 会尝试同时设置到 gin.Context 中
-ctx = logging.Context(ctx, traceID)
-// 从 context 中获取 logger，会尝试从 gin.Context 中获取，context 中没有 logger 则克隆默认 logger 作为 context logger
-ctxlogger = logging.CtxLogger(ctx)
-// log with trace id
-ctxlogger.Debug("ctxlogger with trace id debug")
+import (
+	"context"
+	"github/axiaoxin-com/logging"
+)
 
-// Output:
-// {"level":"DEBUG","time":"2020-04-13T01:34:19.697443+08:00","logger":"root","msg":"no logger in context, clone the default logger as ctxLogger","pid":88649}
-// {"level":"DEBUG","time":"2020-04-13T01:34:19.697453+08:00","logger":"root.ctxLogger","msg":"ctxlogger with trace id debug","pid":88649,"traceID":"logging-bq9l26ript35kicii5tg"}
+/* context logger with trace id */
+func main() {
+	// 初始化一个 context
+	ctx := context.Background()
+	// 生成一个 trace id，如果 context 是 gin.Context，会尝试从其中获取，否则尝试从 context.Context 获取，获取不到则新生成
+	traceID := logging.CtxTraceID(ctx)
+	// 设置 trace id 到 context 中， 会尝试同时设置到 gin.Context 中
+	ctx = logging.Context(ctx, traceID)
+	// 从 context 中获取 logger，会尝试从 gin.Context 中获取，context 中没有 logger 则克隆默认 logger 作为 context logger
+	ctxlogger := logging.CtxLogger(ctx)
+	// log with trace id
+	ctxlogger.Debug("ctxlogger with trace id debug")
+	logging.Debug(ctx, "global debug with ctx")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-14T16:32:36.565279+08:00","logger":"root.ctxLogger","msg":"ctxlogger with trace id debug","pid":17930,"traceID":"logging-bqana93ipt34c2lc9lgg"}
+	// {"level":"DEBUG","time":"2020-04-14T16:32:36.565394+08:00","logger":"root.ctxLogger","msg":"global debug with ctx","pid":17930,"traceID":"logging-bqana93ipt34c2lc9lgg"}
+}
 ```
 
-**示例2**: gin 使用 CtxLogger 打印带 Trace ID 的日志
+**示例2**: gin 中打印带 Trace ID 的日志
 
 ```golang
 package main
@@ -182,13 +213,17 @@ import (
 )
 
 func func1(c context.Context) {
+	// 使用CtxLogger打印带trace id的日志
 	logging.CtxLogger(c).Info("func1 will call func2")
 	func2(c)
+	// 使用logging全局方法打印带trace id的日志
+	logging.Info(c, "func2 is called")
 }
 
 func func2(c context.Context) {
 	logging.CtxLogger(c).Info("func2 will call func3")
 	func3(c)
+	logging.Info(c, "func3 is called")
 }
 
 func func3(c context.Context) {
@@ -198,7 +233,9 @@ func func3(c context.Context) {
 func main() {
 	r := gin.Default()
 
-	r.Use(logging.GinTraceIDMiddleware(logging.TraceIDKey))
+    // 使用默认的回调方法从Header中获取Key为traceID的值作为trace id
+    // 可以自定义方法
+    r.Use(logging.GinTraceIDMiddleware(logging.GetTraceIDFromHeader))
 
 	r.GET("/ping", func(c *gin.Context) {
 		logging.CtxLogger(c).Info("ping ping pong pong")
@@ -212,12 +249,12 @@ func main() {
 
 请求日志：
 ```json
-{"level":"DEBUG","time":"2020-04-13T03:22:34.86741+08:00","logger":"root","msg":"context dose not exist trace id key, generate a new trace id","pid":82451}
-{"level":"DEBUG","time":"2020-04-13T03:22:34.867633+08:00","logger":"root","msg":"no logger in context, clone the default logger as ctxLogger","pid":82451}
-{"level":"INFO","time":"2020-04-13T03:22:34.867649+08:00","logger":"root.ctxLogger","msg":"ping ping pong pong","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
-{"level":"INFO","time":"2020-04-13T03:22:34.86766+08:00","logger":"root.ctxLogger","msg":"func1 will call func2","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
-{"level":"INFO","time":"2020-04-13T03:22:34.867668+08:00","logger":"root.ctxLogger","msg":"func2 will call func3","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
-{"level":"INFO","time":"2020-04-13T03:22:34.867674+08:00","logger":"root.ctxLogger","msg":"func3 be called","pid":82451,"traceID":"logging-bq9mkujipt3444tmd1vg"}
+{"level":"INFO","time":"2020-04-14T16:35:36.151951+08:00","logger":"root.ctxLogger","msg":"ping ping pong pong","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
+{"level":"INFO","time":"2020-04-14T16:35:36.15217+08:00","logger":"root.ctxLogger","msg":"func1 will call func2","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
+{"level":"INFO","time":"2020-04-14T16:35:36.152178+08:00","logger":"root.ctxLogger","msg":"func2 will call func3","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
+{"level":"INFO","time":"2020-04-14T16:35:36.152183+08:00","logger":"root.ctxLogger","msg":"func3 be called","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
+{"level":"INFO","time":"2020-04-14T16:35:36.152189+08:00","logger":"root.ctxLogger","msg":"func3 is called","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
+{"level":"INFO","time":"2020-04-14T16:35:36.152197+08:00","logger":"root.ctxLogger","msg":"func2 is called","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
 ```
 
 请求响应头中也包含 Trace ID：
@@ -234,13 +271,15 @@ curl localhost:8080/ping -v
 >
 < HTTP/1.1 200 OK
 < Content-Type: text/plain; charset=utf-8
-< Traceid: logging-bq9mkujipt3444tmd1vg
-< Date: Sun, 12 Apr 2020 19:22:34 GMT
+< Traceid: logging-bqanbm3ipt37h899lbu0
+< Date: Tue, 14 Apr 2020 08:35:36 GMT
 < Content-Length: 4
 <
 * Connection #0 to host localhost left intact
 pong* Closing connection 0
 ```
+
+请求时如果指定Header `-H "traceID: x-y-z"`，demo将使用该值作为trace id
 
 ## 动态修改 logger 日志级别
 
