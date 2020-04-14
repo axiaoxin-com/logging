@@ -76,6 +76,7 @@ type Options struct {
 	SentryClient      *sentry.Client         // sentry客户端
 	AtomicLevelAddr   string                 // http动态修改日志级别的地址，传空不启用
 	EncoderConfig     zapcore.EncoderConfig  // 配置日志地点key的名称
+	LumberjackSink    *LumberjackSink        // lumberjack sink支持日志文件rotate
 }
 
 // init the global default logger
@@ -91,6 +92,7 @@ func init() {
 		SentryClient:      nil,
 		AtomicLevelAddr:   defaultAtomicLevelAddr,
 		EncoderConfig:     defaultEncoderConfig,
+		LumberjackSink:    nil,
 	}
 	var err error
 	logger, err = NewLogger(options)
@@ -146,6 +148,13 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	cfg.Sampling = &zap.SamplingConfig{
 		Initial:    100,
 		Thereafter: 100,
+	}
+
+	// 注册 lumberjack sink，支持Outputs指定为文件时可以使用lumberjack对日志文件自动rotate
+	if options.LumberjackSink != nil {
+		if err := RegisterLumberjackSink(options.LumberjackSink); err != nil {
+			Error("RegisterSink error", zap.Error(err))
+		}
 	}
 
 	// 生成logger

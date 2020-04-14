@@ -8,6 +8,7 @@ logging 简单封装了在日常使用 [zap](https://github.com/uber-go/zap) 打
 - 支持从 context.Context/gin.Context 中创建、获取带有 Trace ID 的 logger
 - 支持动态调整日志级别，无需修改配置、重启服务
 - 支持自定义 logger EncoderConfig 字段名
+- 支持将日志保存到文件并自动 rotate
 
 logging 只提供 zap 使用时的常用方法汇总，不是对 zap 进行二次开发，拒绝过度封装。
 
@@ -348,4 +349,37 @@ logger.Debug("EncoderConfig Debug", zap.Reflect("Tags", map[string]interface{}{
     "Latency":    0.075,
 }))
 // {"LogLevel":"DEBUG","LogTime":"2020-04-13T14:51:39.478605+08:00","ServiceName":"apiserver","LogLine":"example/logging.go:72","Message":"EncoderConfig Debug","pid":50014,"Tags":{"Latency":0.075,"Status":"200 OK","StatusCode":200}}
+```
+
+
+## 日志保存到文件并自动 rotate
+
+使用 lumberjack 将日志保存到文件并 rotate ，采用 zap 的 RegisterSink 方法和 Config.OutputPaths 字段添加自定义的日志输出的方式来使用 lumberjack。
+
+
+**示例**
+
+```golang
+package main
+
+import (
+	"github/axiaoxin-com/logging"
+)
+
+// Options 传入 LumberjacSink，并在 OutputPaths 中添加对应 scheme 就能将日志保存到文件并自动 rotate
+func main() {
+    /* 使用logger将日志输出到x.log */
+	// 创建一个lumberjack的sink，scheme 为 lumberjack，日志文件为 /tmp/x.log , 保存 7 天，保留 10 份文件，文件大小超过 100M，使用压缩备份，压缩文件名使用 localtime
+	sink := logging.NewLumberjackSink("lumberjack", "/tmp/x.log", 7, 10, 100, true, true)
+    // 创建logger时，设置该sink，OutputPaths 设置为对应 scheme
+	options := logging.Options{
+		LumberjackSink: sink,
+		// 使用 sink 中设置的url scheme 即 lumberjack: 或 lumberjack://
+		OutputPaths: []string{"lumberjack:"},
+	}
+    // 创建logger
+	logger, _ := logging.NewLogger(options)
+    // 日志将打到x.log文件中
+	logger.Debug("xxx")
+}
 ```
