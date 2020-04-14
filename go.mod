@@ -1,4 +1,4 @@
-module github/axiaoxin-com/logging
+module github.com/axiaoxin-com/logging
 
 go 1.13
 

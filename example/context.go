@@ -2,7 +2,8 @@ package main
 
 import (
 	"context"
-	"github/axiaoxin-com/logging"
+
+	"github.com/axiaoxin-com/logging"
 )
 
 /* context logger with trace id */

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github/axiaoxin-com/logging"
+	"github.com/axiaoxin-com/logging"
 )
 
 // Options 传入 LumberjacSink，并在 OutputPaths 中添加对应 scheme 就能将日志保存到文件并自动 rotate

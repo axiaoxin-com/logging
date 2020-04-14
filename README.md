@@ -16,7 +16,7 @@ logging 只提供 zap 使用时的常用方法汇总，不是对 zap 进行二�
 ## 安装
 
 ```
-go get -u github/axiaoxin-com/logging
+go get -u github.com/axiaoxin-com/logging
 ```
 
 ## 开箱即用
@@ -37,7 +37,7 @@ package main
 
 import (
 	"context"
-	"github/axiaoxin-com/logging"
+	"github.com/axiaoxin-com/logging"
 
 	"go.uber.org/zap"
 )
@@ -181,7 +181,7 @@ package main
 
 import (
 	"context"
-	"github/axiaoxin-com/logging"
+	"github.com/axiaoxin-com/logging"
 )
 
 /* context logger with trace id */
@@ -210,7 +210,7 @@ package main
 
 import (
 	"context"
-	"github/axiaoxin-com/logging"
+	"github.com/axiaoxin-com/logging"
 
 	"github.com/gin-gonic/gin"
 )
@@ -297,7 +297,7 @@ package main
 
 import (
 	"fmt"
-	"github/axiaoxin-com/logging"
+	"github.com/axiaoxin-com/logging"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -405,7 +405,7 @@ logger.Debug("EncoderConfig Debug", zap.Reflect("Tags", map[string]interface{}{
 package main
 
 import (
-	"github/axiaoxin-com/logging"
+	"github.com/axiaoxin-com/logging"
 )
 
 // Options 传入 LumberjacSink，并在 OutputPaths 中添加对应 scheme 就能将日志保存到文件并自动 rotate

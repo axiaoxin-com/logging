@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github/axiaoxin-com/logging"
+	"github.com/axiaoxin-com/logging"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
