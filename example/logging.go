@@ -24,7 +24,7 @@ func main() {
 	//{"level":"DEBUG","time":"2020-04-12T02:56:39.327301+08:00","logger":"root.ctxLogger","msg":"Debugw message","pid":27907,"name":"axiaoxin","age":18}
 
 	/* with context */
-	c := logging.Context(context.Background(), "trace-id-123")
+	c := logging.Context(context.Background(), logging.DefaultLogger(), "trace-id-123")
 	logging.Debug(c, "Debug with trace id")
-	// {"level":"DEBUG","time":"2020-04-14T16:16:29.404008+08:00","logger":"root.ctxLogger","msg":"Debug with trace id","pid":44559,"traceID":"trace-id-123"}
+	// {"level":"DEBUG","time":"2020-04-14T16:16:29.404008+08:00","logger":"root","msg":"Debug with trace id","pid":44559,"traceID":"trace-id-123"}
 }

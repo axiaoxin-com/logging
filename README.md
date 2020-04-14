@@ -59,9 +59,9 @@ func main() {
 	//{"level":"DEBUG","time":"2020-04-12T02:56:39.327301+08:00","logger":"root.ctxLogger","msg":"Debugw message","pid":27907,"name":"axiaoxin","age":18}
 
 	/* with context */
-	c := logging.Context(context.Background(), "trace-id-123")
+	c := logging.Context(context.Background(), logging.DefaultLogger(), "trace-id-123")
 	logging.Debug(c, "Debug with trace id")
-	// {"level":"DEBUG","time":"2020-04-14T16:16:29.404008+08:00","logger":"root.ctxLogger","msg":"Debug with trace id","pid":44559,"traceID":"trace-id-123"}
+	// {"level":"DEBUG","time":"2020-04-14T16:16:29.404008+08:00","logger":"root","msg":"Debug with trace id","pid":44559,"traceID":"trace-id-123"}
 }
 ```
 ## 快速创建你的 Logger
@@ -191,7 +191,7 @@ func main() {
 	// 生成一个 trace id，如果 context 是 gin.Context，会尝试从其中获取，否则尝试从 context.Context 获取，获取不到则新生成
 	traceID := logging.CtxTraceID(ctx)
 	// 设置 trace id 到 context 中， 会尝试同时设置到 gin.Context 中
-	ctx = logging.Context(ctx, traceID)
+	ctx = logging.Context(ctx, logging.CtxLogger(ctx), traceID)
 	// 从 context 中获取 logger，会尝试从 gin.Context 中获取，context 中没有 logger 则克隆默认 logger 作为 context logger
 	ctxlogger := logging.CtxLogger(ctx)
 	// log with trace id

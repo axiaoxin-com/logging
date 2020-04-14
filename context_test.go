@@ -12,7 +12,7 @@ import (
 
 func TestGinContext(t *testing.T) {
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
-	Context(c, "1234")
+	Context(c, CtxLogger(c), "1234")
 	_, exists := c.Get(CtxLoggerKey)
 	if !exists {
 		t.Fatal("set ctxLogger failed")
@@ -26,7 +26,7 @@ func TestGinContext(t *testing.T) {
 func TestContext(t *testing.T) {
 	c := context.Background()
 
-	c = Context(c, "1234")
+	c = Context(c, CtxLogger(c), "1234")
 	if tid := CtxTraceID(c); tid != "1234" {
 		t.Fatal("invalid tid", c, tid)
 	}
@@ -75,7 +75,7 @@ func TestCtxLoggerEmptyField(t *testing.T) {
 func TestGinCtxLoggerDefaultLogger(t *testing.T) {
 	c := &gin.Context{}
 
-	Context(c, "rid")
+	Context(c, CtxLogger(c), "rid")
 	logger := CtxLogger(c)
 	if logger == nil {
 		t.Fatal("context also must should return a logger")
@@ -86,7 +86,7 @@ func TestGinCtxLoggerDefaultLogger(t *testing.T) {
 func TestCtxLoggerDefaultLogger(t *testing.T) {
 	c := context.Background()
 
-	Context(c, "rid")
+	Context(c, CtxLogger(c), "rid")
 	logger := CtxLogger(c)
 	if logger == nil {
 		t.Fatal("context also must should return a logger")
@@ -96,7 +96,7 @@ func TestCtxLoggerDefaultLogger(t *testing.T) {
 func TestGinCtxLoggerDefaultLoggerWithField(t *testing.T) {
 	c := &gin.Context{}
 
-	Context(c, "rid")
+	Context(c, CtxLogger(c), "rid")
 	ctxlogger := CtxLogger(c, zap.String("myfield", "xxx"))
 	if ctxlogger == nil {
 		t.Fatal("context also must should return a logger")
@@ -110,7 +110,7 @@ func TestGinCtxLoggerDefaultLoggerWithField(t *testing.T) {
 func TestCtxLoggerDefaultLoggerWithField(t *testing.T) {
 	c := context.Background()
 
-	Context(c, "rid")
+	Context(c, CtxLogger(c), "rid")
 	ctxlogger := CtxLogger(c, zap.String("myfield", "xxx"))
 	if ctxlogger == nil {
 		t.Fatal("context also must should return a logger")

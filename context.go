@@ -58,11 +58,10 @@ func CtxTraceID(c context.Context) string {
 	return "logging-" + xid.New().String()
 }
 
-// Context set ctxlogger and trace id into context.Context and gin.Context
-func Context(c context.Context, traceID string) context.Context {
+// Context set trace id in logger,then set trace id and logger into context.Context and gin.Context
+func Context(c context.Context, logger *zap.Logger, traceID string) context.Context {
 	// set trace id in ctxlogger
-	logger := CtxLogger(c, zap.String(TraceIDKey, traceID))
-
+	logger = logger.With(zap.String(TraceIDKey, traceID))
 	if gc, ok := c.(*gin.Context); ok {
 		// set ctxlogger in gin.Context
 		gc.Set(CtxLoggerKey, logger)

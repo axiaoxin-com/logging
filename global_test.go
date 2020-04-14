@@ -8,7 +8,7 @@ import (
 )
 
 func TestGlobal(t *testing.T) {
-	c := Context(context.Background(), "xxx-yyy-zzz")
+	c := Context(context.Background(), DefaultLogger(), "xxx-yyy-zzz")
 	Debug(nil, "Debug nil", zap.Int("k", 1))
 	Debug(c, "Debug", zap.Int("k", 1))
 	Info(c, "Info")
