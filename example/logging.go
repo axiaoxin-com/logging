@@ -28,4 +28,8 @@ func main() {
 	c := logging.Context(context.Background(), logging.DefaultLogger(), "trace-id-123")
 	logging.Debug(c, "Debug with trace id")
 	// {"level":"DEBUG","time":"2020-04-14T16:16:29.404008+08:00","logger":"root","msg":"Debug with trace id","pid":44559,"traceID":"trace-id-123"}
+
+	/* extra fields */
+	logging.Debug(c, "extra fields demo", logging.ExtraField("k1", "v1", "k2", 2, "k3", true))
+	// {"level":"DEBUG","time":"2020-04-14T23:50:05.056916+08:00","logger":"root","msg":"extra fields demo","pid":98214,"traceID":"trace-id-123","extra":{"k1":"v1","k2":2,"k3":true}}
 }
