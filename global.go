@@ -179,3 +179,17 @@ func Fatal(c context.Context, msg string, fields ...zap.Field) {
 	defer logger.Sync()
 	logger.Fatal(msg, fields...)
 }
+
+// ExtraField 顺序传入kv对，返回以extra为key，传入的kv对组成的map为值的zap Reflect Field
+// 在需要固定日志外层json字段有需要添加新字段时可以使用
+func ExtraField(keysAndValues ...interface{}) zap.Field {
+	fieldMap := map[string]interface{}{}
+	for i := 0; i < len(keysAndValues); {
+		k, v := keysAndValues[i], keysAndValues[i+1]
+		if kStr, ok := k.(string); ok {
+			fieldMap[kStr] = v
+		}
+		i += 2
+	}
+	return zap.Reflect("extra", fieldMap)
+}

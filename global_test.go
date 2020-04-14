@@ -29,4 +29,7 @@ func TestGlobal(t *testing.T) {
 	Infow(c, "Infow", "k1", "v1")
 	Warnw(c, "Warnw", "k1", "v1")
 	Errorw(c, "Errorw", "k1", "v1")
+
+	f := ExtraField("k1", "v1", "k2", 2)
+	t.Logf("%#v", f)
 }
