@@ -179,7 +179,10 @@ func NewLogger(options Options) (*zap.Logger, error) {
 			// curl -X GET localhost:1903
 			// curl -X PUT localhost:1903 -d '{"level":"info"}'
 			levelServer := http.NewServeMux()
-			levelServer.Handle("/", cfg.Level)
+			levelServer.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+				cfg.Level.ServeHTTP(w, r)
+				logger.Debug("Handled AtomicLevel HTTP request", zap.String("method", r.Method))
+			})
 			if err := http.ListenAndServe(options.AtomicLevelAddr, levelServer); err != nil {
 				Error(nil, "logging NewLogger levelServer ListenAndServe error", zap.Error(err))
 			}
