@@ -14,9 +14,6 @@ func TestInit(t *testing.T) {
 	if logger == nil {
 		t.Error("logger is nil")
 	}
-	if slogger == nil {
-		t.Error("slogger is nil")
-	}
 }
 
 func TestNewLoggerNoParam(t *testing.T) {
@@ -61,17 +58,6 @@ func TestCloneDefaultLogger(t *testing.T) {
 		t.Error("CloneDefaultLogger should not be default logger")
 	}
 	if &nlogger == &logger {
-		t.Error("CloneDefaultLogger should not be default logger")
-	}
-}
-
-func TestCloneDefaultSLogger(t *testing.T) {
-	nlogger := CloneDefaultSLogger("cloned-slogger")
-	nlogger.Info("TestCloneDefaultSLogger Info")
-	if reflect.DeepEqual(nlogger, logger) {
-		t.Error("CloneDefaultLogger should not be default logger")
-	}
-	if *nlogger == *slogger {
 		t.Error("CloneDefaultLogger should not be default logger")
 	}
 }

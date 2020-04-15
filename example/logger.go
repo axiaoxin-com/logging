@@ -22,24 +22,12 @@ func main() {
 	// 设置 sentry，使用该 logger 打印 Error 及其以上级别的日志事件将会自动上报到 Sentry
 	defaultLogger = logging.SentryAttach(defaultLogger, sentryClient)
 
-	/* 获取默认sugared logger */
-	defaultSLogger := logging.DefaultSLogger()
-	defaultSLogger.Debug("DefaultSLogger")
-	// Output:
-	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548263","logger":"root","msg":"DefaultSLogger","pid":68701}
-
 	/* 克隆一个带有初始字段的默认logger */
 	// 初始字段可以不传，克隆的 logger 名称会是 root.subname，该 logger 打印的日志都会带上传入的字段
 	cloneDefaultLogger := logging.CloneDefaultLogger("subname", zap.String("str_field", "field_value"))
 	cloneDefaultLogger.Debug("CloneDefaultLogger")
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548271","logger":"root.subname","msg":"CloneDefaultLogger","pid":68701,"str_field":"field_value"}
-
-	/* 克隆一个带有初始字段的默认 sugared logger */
-	cloneDefaultSLogger := logging.CloneDefaultSLogger("subname", "foo", 123, zap.String("str_field", "field_value"))
-	cloneDefaultSLogger.Debug("CloneDefaultSLogger")
-	// Output:
-	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548283","logger":"root.subname","msg":"CloneDefaultSLogger","pid":68701,"foo":123,"str_field":"field_value"}
 
 	/* 使用Options创建logger */
 	// 可以直接使用空Options创建默认配置项的logger

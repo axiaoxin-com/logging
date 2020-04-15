@@ -24,8 +24,6 @@ import (
 var (
 	// logger default global zap Logger with pid field
 	logger *zap.Logger
-	// slogger default global zap sugared Logger with pid field
-	slogger *zap.SugaredLogger
 	// defaultOutPaths zap日志默认输出位置
 	defaultOutPaths = []string{"stderr"}
 	// defaultInitialFields 默认初始字段为进程id
@@ -98,8 +96,6 @@ func init() {
 	logger, err = NewLogger(options)
 	if err != nil {
 		log.Println(err)
-	} else {
-		slogger = logger.Sugar()
 	}
 }
 
@@ -198,13 +194,6 @@ func DefaultLogger() *zap.Logger {
 	return clogger
 }
 
-// DefaultSLogger return the global slogger
-func DefaultSLogger() *zap.SugaredLogger {
-	copy := *slogger
-	cslogger := &copy
-	return cslogger
-}
-
 // CloneDefaultLogger return the global logger copy which add a new name
 func CloneDefaultLogger(name string, fields ...zap.Field) *zap.Logger {
 	copy := *logger
@@ -214,17 +203,6 @@ func CloneDefaultLogger(name string, fields ...zap.Field) *zap.Logger {
 		clogger = clogger.With(fields...)
 	}
 	return clogger
-}
-
-// CloneDefaultSLogger return the global slogger copy which add a new name
-func CloneDefaultSLogger(name string, args ...interface{}) *zap.SugaredLogger {
-	copy := *slogger
-	cslogger := &copy
-	cslogger = cslogger.Named(name)
-	if len(args) > 0 {
-		cslogger = cslogger.With(args...)
-	}
-	return cslogger
 }
 
 // AttachCore add a core to zap logger
