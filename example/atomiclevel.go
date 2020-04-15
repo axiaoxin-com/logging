@@ -24,6 +24,8 @@ func main() {
 	}
 	logger, _ := logging.NewLogger(options)
 	logger.Debug("Debug level msg", zap.Any("current level", level.Level()))
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:03:17.799767","logger":"root","caller":"example/atomiclevel.go:main:26","msg":"Debug level msg","pid":6088,"current level":"debug"}
 
 	// 使用SetLevel动态修改logger 日志级别为error
 	// 实际应用中可以监听配置文件中日志级别配置项的变化动态调用该函数
@@ -32,10 +34,8 @@ func main() {
 	logger.Info("Info level msg will not be logged")
 	// 只会打印error以上
 	logger.Error("Error level msg", zap.Any("current level", level.Level()))
-
 	// Output:
-	// {"level":"DEBUG","time":"2020-04-13T19:34:46.12339+08:00","logger":"root","caller":"example/atomiclevel.go:18","msg":"Debug level msg","pid":21546,"current level":"debug"}
-	// {"level":"ERROR","time":"2020-04-13T19:34:46.123555+08:00","logger":"root","caller":"example/atomiclevel.go:26","msg":"Error Level msg","pid":21546,"current level":"error","stacktrace":"main.main\n\t/Users/ashin/go/src/logging/example/atomiclevel.go:26\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
+	// {"level":"ERROR","time":"2020-04-15 18:03:17.799999","logger":"root","caller":"example/atomiclevel.go:main:34","msg":"Error level msg","pid":6088,"current level":"error","stacktrace":"main.main\n\t/Users/ashin/go/src/logging/example/atomiclevel.go:34\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
 
 	// 通过HTTP方式动态修改当前的error level为debug level
 	// 查询当前 level
@@ -44,6 +44,8 @@ func main() {
 	content, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	fmt.Println("currentlevel:", string(content))
+	// Output: currentlevel: {"level":"error"}
+
 	logger.Info("Info level will not be logged")
 
 	// 修改level为debug
@@ -53,13 +55,10 @@ func main() {
 	content, _ = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 	fmt.Println("newlevel:", string(content))
+	// Output: newlevel: {"level":"debug"}
 
 	logger.Debug("level is changed on fly!")
 
 	// Output:
-	// currentlevel: {"level":"error"}
-	//
-	// newlevel: {"level":"debug"}
-	//
-	// {"level":"DEBUG","time":"2020-04-13T20:04:25.694969+08:00","logger":"root","caller":"example/atomiclevel.go:56","msg":"level is changed on fly!","pid":55317}
+	// {"level":"DEBUG","time":"2020-04-15 18:03:17.805293","logger":"root","caller":"example/atomiclevel.go:main:57","msg":"level is changed on fly!","pid":6088}
 }

@@ -8,7 +8,7 @@ logging 简单封装了在日常使用 [zap](https://github.com/uber-go/zap) 打
 - 支持从 context.Context/gin.Context 中创建、获取带有 **Trace ID** 的 logger
 - 提供 gin 中 Trace ID 的中间件，支持自定义方法获取 Trace ID
 - 支持服务内部函数方式和外部 HTTP 方式**动态调整日志级别**，无需修改配置、重启服务
-- 支持自定义 logger EncoderConfig 字段名
+- 支持自定义 logger Encoder 配置
 - 支持将日志保存到文件并自动 rotate
 
 logging 只提供 zap 使用时的常用方法汇总，不是对 zap 进行二次开发，拒绝过度封装。
@@ -36,141 +36,131 @@ logging 提供的开箱即用方法都是使用自身默认 logger 克隆出的 
 package main
 
 import (
-    "context"
-    "github.com/axiaoxin-com/logging"
+	"context"
 
-    "go.uber.org/zap"
+	"github.com/axiaoxin-com/logging"
+
+	"go.uber.org/zap"
 )
 
 func main() {
-    /* zap Debug */
-    logging.Debug(nil, "Debug message", zap.Int("intType", 123), zap.Bool("boolType", false), zap.Ints("sliceInt", []int{1, 2, 3}), zap.Reflect("map", map[string]interface{}{"i": 1, "s": "s"}))
-    // {"level":"DEBUG","time":"2020-04-12T02:56:39.32688+08:00","logger":"root.ctxLogger","msg":"Debug message","pid":27907,"intType":123,"boolType":false,"sliceInt":[1,2,3],"map":{"i":1,"s":"s"}}
+	/* zap Debug */
+	logging.Debug(nil, "Debug message", zap.Int("intType", 123), zap.Bool("boolType", false), zap.Ints("sliceInt", []int{1, 2, 3}), zap.Reflect("map", map[string]interface{}{"i": 1, "s": "s"}))
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991006","logger":"root.ctxLogger","msg":"Debug message","pid":45713,"intType":123,"boolType":false,"sliceInt":[1,2,3],"map":{"i":1,"s":"s"}}
 
-    /* zap sugared logger Debug */
-    logging.Debugs(nil, "Debugs message", 123, false, []int{1, 2, 3}, map[string]interface{}{"i": 1, "s": "s"})
-    // {"level":"DEBUG","time":"2020-04-12T02:56:39.327239+08:00","logger":"root.ctxLogger","msg":"Debugs message123 false [1 2 3] map[i:1 s:s]","pid":27907}
+	/* zap sugared logger Debug */
+	logging.Debugs(nil, "Debugs message", 123, false, []int{1, 2, 3}, map[string]interface{}{"i": 1, "s": "s"})
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991239","logger":"root.ctxLogger","msg":"Debugs message123 false [1 2 3] map[i:1 s:s]","pid":45713}
 
-    /* zap sugared logger Debugf */
-    logging.Debugf(nil, "Debugf message, %s", "ok")
-    //{"level":"DEBUG","time":"2020-04-12T02:56:39.327287+08:00","logger":"root.ctxLogger","msg":"Debugf message, ok","pid":27907}
-    /* zap sugared logger Debugw */
-    logging.Debugw(nil, "Debugw message", "name", "axiaoxin", "age", 18)
-    //{"level":"DEBUG","time":"2020-04-12T02:56:39.327301+08:00","logger":"root.ctxLogger","msg":"Debugw message","pid":27907,"name":"axiaoxin","age":18}
+	/* zap sugared logger Debugf */
+	logging.Debugf(nil, "Debugf message, %s", "ok")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991268","logger":"root.ctxLogger","msg":"Debugf message, ok","pid":45713}
 
-    /* with context */
-    c := logging.Context(context.Background(), logging.DefaultLogger(), "trace-id-123")
-    logging.Debug(c, "Debug with trace id")
-    // {"level":"DEBUG","time":"2020-04-14T16:16:29.404008+08:00","logger":"root","msg":"Debug with trace id","pid":44559,"traceID":"trace-id-123"}
+	/* zap sugared logger Debugw */
+	logging.Debugw(nil, "Debugw message", "name", "axiaoxin", "age", 18)
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991277","logger":"root.ctxLogger","msg":"Debugw message","pid":45713,"name":"axiaoxin","age":18}
 
-    /* extra fields */
-    logging.Debug(c, "extra fields demo", logging.ExtraField("k1", "v1", "k2", 2, "k3", true))
-    // {"level":"DEBUG","time":"2020-04-14T23:50:05.056916+08:00","logger":"root","msg":"extra fields demo","pid":98214,"traceID":"trace-id-123","extra":{"k1":"v1","k2":2,"k3":true}}
+	/* with context */
+	c := logging.Context(context.Background(), logging.DefaultLogger(), "trace-id-123")
+	logging.Debug(c, "Debug with trace id")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991314","logger":"root","msg":"Debug with trace id","pid":45713,"traceID":"trace-id-123"}
+
+	/* extra fields */
+	logging.Debug(c, "extra fields demo", logging.ExtraField("k1", "v1", "k2", 2, "k3", true))
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991348","logger":"root","msg":"extra fields demo","pid":45713,"traceID":"trace-id-123","extra":{"k1":"v1","k2":2,"k3":true}}
 }
 ```
 ## 快速创建你的 Logger
 
 logging 提供多种方式快速获取一个 logger 来打印日志
 
-**示例0**：快速获取默认 logger
+**示例**：
 
 ```golang
-import "github.com/axiaoxin-com/logging"
+package main
 
-// 使用 logging 提供的方法获取默认 logger
-logger := logging.DefaultLogger()
-// 使用 logging 提供的方法获取默认 slogger
-slogger := logging.DefaultSLogger()
-```
+import (
+	"context"
 
-**示例1**：为默认 logger 设置 sentry Error以上日志自动上报错误事件
+	"github.com/axiaoxin-com/logging"
 
-```golang
-import "github.com/axiaoxin-com/logging"
+	"go.uber.org/zap"
+)
 
-// 创建一个默认 logger
-logger := logging.DefaultLogger()
+func main() {
+	/* 获取默认logger */
+	defaultLogger := logging.DefaultLogger()
+	defaultLogger.Debug("DefaultLogger")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548141","logger":"root","msg":"DefaultLogger","pid":68701}
 
-// logging 内部默认的 logger 不支持 sentry 上报，可以通过以下方法设置 sentry
-// 创建 sentry 客户端
-sentryClient, _ := logging.GetSentryClientByDSN("YOUR_SENTRY_DSN", false)
-// 设置 sentry，使用该 logger 打印 Error 及其以上级别的日志事件将会自动上报到 Sentry
-logger = logging.SentryAttach(logger, sentryClient)
-```
+	/* 为默认logger设置sentry core */
+	// logging 内部默认的 logger 不支持 sentry 上报，可以通过以下方法设置 sentry
+	// 创建 sentry 客户端
+	sentryClient, _ := logging.GetSentryClientByDSN("YOUR_SENTRY_DSN", false)
+	// 设置 sentry，使用该 logger 打印 Error 及其以上级别的日志事件将会自动上报到 Sentry
+	defaultLogger = logging.SentryAttach(defaultLogger, sentryClient)
 
-**示例2**: 使用 NewLogger 方法创建一个默认配置的 logger （不支持 sentry 和 http 动态修改日志级别，日志输出到stderr）
+	/* 获取默认sugared logger */
+	defaultSLogger := logging.DefaultSLogger()
+	defaultSLogger.Debug("DefaultSLogger")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548263","logger":"root","msg":"DefaultSLogger","pid":68701}
 
-```golang
-import "github.com/axiaoxin-com/logging"
+	/* 克隆一个带有初始字段的默认logger */
+	// 初始字段可以不传，克隆的 logger 名称会是 root.subname，该 logger 打印的日志都会带上传入的字段
+	cloneDefaultLogger := logging.CloneDefaultLogger("subname", zap.String("str_field", "field_value"))
+	cloneDefaultLogger.Debug("CloneDefaultLogger")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548271","logger":"root.subname","msg":"CloneDefaultLogger","pid":68701,"str_field":"field_value"}
 
-logger, _ := logging.NewLogger(logging.Options{})
-```
+	/* 克隆一个带有初始字段的默认 sugared logger */
+	cloneDefaultSLogger := logging.CloneDefaultSLogger("subname", "foo", 123, zap.String("str_field", "field_value"))
+	cloneDefaultSLogger.Debug("CloneDefaultSLogger")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548283","logger":"root.subname","msg":"CloneDefaultSLogger","pid":68701,"foo":123,"str_field":"field_value"}
 
-**示例3**: 创建有配置项的 logger （支持 sentry 和 http 动态修改日志级别）
+	/* 使用Options创建logger */
+	// 可以直接使用空Options创建默认配置项的logger
+	// 不支持 sentry 和 http 动态修改日志级别，日志输出到stderr
+	emptyOptionsLogger, _ := logging.NewLogger(logging.Options{})
+	emptyOptionsLogger.Debug("emptyOptionsLogger")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548323","logger":"root","caller":"example/logger.go:main:48","msg":"emptyOptionsLogger","pid":68701}
 
-```golang
-import "github.com/axiaoxin-com/logging"
+	// 配置Options创建logger
+	// 日志级别定义在外层，便于代码内部可以动态修改日志级别
+	level := logging.TextLevelMap["debug"]
+	options := logging.Options{
+		Name:              "root",                         // logger 名称
+		Level:             level,                          // zap 的 AtomicLevel，logger 日志级别
+		Format:            "json",                         // 日志输出格式为 json
+		OutputPaths:       []string{"stderr"},             // 日志输出位置为 stderr
+		InitialFields:     logging.DefaultInitialFields(), // DefaultInitialFields 初始 logger 带有 pid 字段
+		DisableCaller:     false,                          // 是否打印调用的代码行位置
+		DisableStacktrace: false,                          // 错误日志是否打印调用栈信息
+		SentryClient:      sentryClient,                   // sentry 客户端
+		AtomicLevelAddr:   ":8080",                        // http 动态修改日志级别的端口地址，不设置则不开启 http 服务
+	}
+	optionsLogger, _ := logging.NewLogger(options)
+	optionsLogger.Debug("optionsLogger")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548363","logger":"root","caller":"example/logger.go:main:67","msg":"optionsLogger","pid":68701}
 
-// sentry client for reporting Error to Sentry
-sc, _ := logging.GetSentryClientByDSN("your_sentry_dsn", true)
-
-// atomic level for changing it dynamicly
-level := logging.TextLevelMap["debug"]
-
-options := logging.Options{
-    Name:              "your_logger_name",              // logger 名称
-    Level:             level,                           // zap 的 AtomicLevel，logger 日志级别
-    Format:            "json",                          // 日志输出格式为 json
-    OutputPaths:       []string{"stderr"},              // 日志输出位置为 stderr
-    InitialFields:     logging.DefaultInitialFields(),  // DefaultInitialFields 初始 logger 带有 pid 字段
-    DisableCaller:     false,                           // 是否打印调用的代码行位置
-    DisableStacktrace: false,                           // 错误日志是否打印调用栈信息
-    SentryClient:      sc,                              // sentry 客户端
-    AtomicLevelAddr:   ":8080",                         // http 动态修改日志级别的端口地址，不设置则不开启 http 服务
+	/* 从context.Context或*gin.Context中获取或创建logger */
+	ctx := context.Background()
+	ctxLogger := logging.CtxLogger(ctx, zap.String("field1", "xxx"))
+	ctxLogger.Debug("ctxLogger")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548414","logger":"root.ctxLogger","msg":"ctxLogger","pid":68701,"field1":"xxx"}
 }
-
-// new logger with options
-logger, _ := logging.NewLogger(options)
 ```
-
-**示例4**: 快速克隆一个默认 logger，并添加初始字段
-
-```golang
-import "github.com/axiaoxin-com/logging"
-
-logger := logging.CloneDefaultLogger("subname", zap.String("str_field", "field_value"))
-
-logger.Debug("CloneDefaultLogger Debug")
-
-// {"level":"DEBUG","time":"2020-04-13T00:20:36.614438+08:00","logger":"root.subname","msg":"CloneDefaultLogger Debug","pid":54273,"str_field":"field_value"}
-```
-
-初始字段可以不传，克隆的 logger 名称会是 root.subname，该 logger 打印的日志都会带上传入的字段
-
-**示例5**: 快速克隆一个默认 sugared logger，并添加初始字段
-
-```golang
-import "github.com/axiaoxin-com/logging"
-
-logger := logging.CloneDefaultSLogger("subname", "foo", 123, zap.String("str_field", "field_value"))
-
-logger.Debug("CloneDefaultSLogger Debug")
-
-// {"level":"DEBUG","time":"2020-04-13T00:24:41.629175+08:00","logger":"root.subname","msg":"CloneDefaultSLogger Debug","pid":73087,"foo":123,"str_field":"field_value"}
-```
-
-初始字段可以不传，克隆的 sugared logger 名称会是 root.subname，添加的初始字段则该 logger 打印的日志都会带上传入的字段
-
-**示例6**: 创建一个 CtxLogger
-
-```golang
-/* new context logger */
-ctx := context.Background()
-ctxlogger := logging.CtxLogger(ctx, zap.String("fie    ld1", "xxx"))
-ctxlogger.Debug("ctxlogger debug")
-// {"level":"DEBUG","time":"2020-04-13T14:52:29.00566+08:00","logger":"root.ctxLogger","msg":"ctxlogger debug","pid":53998,"field1":"xxx"}
- ```
-
 
 ## 带 Trace ID 的 CtxLogger
 
@@ -185,6 +175,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/axiaoxin-com/logging"
 )
 
@@ -194,16 +185,18 @@ func main() {
 	ctx := context.Background()
 	// 生成一个 trace id，如果 context 是 gin.Context，会尝试从其中获取，否则尝试从 context.Context 获取，获取不到则新生成
 	traceID := logging.CtxTraceID(ctx)
-	// 设置 trace id 到 context 中， 会尝试同时设置到 gin.Context 中
+	// 设置 trace id 到 context 和 logger 中， 会尝试同时设置到 gin.Context 中
 	ctx = logging.Context(ctx, logging.CtxLogger(ctx), traceID)
 	// 从 context 中获取 logger，会尝试从 gin.Context 中获取，context 中没有 logger 则克隆默认 logger 作为 context logger
 	ctxlogger := logging.CtxLogger(ctx)
 	// log with trace id
 	ctxlogger.Debug("ctxlogger with trace id debug")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 19:12:45.263227","logger":"root.ctxLogger","msg":"ctxlogger with trace id debug","pid":17044,"traceID":"logging-bqbeobbipt345502logg"}
+
 	logging.Debug(ctx, "global debug with ctx")
 	// Output:
-	// {"level":"DEBUG","time":"2020-04-14T16:32:36.565279+08:00","logger":"root.ctxLogger","msg":"ctxlogger with trace id debug","pid":17930,"traceID":"logging-bqana93ipt34c2lc9lgg"}
-	// {"level":"DEBUG","time":"2020-04-14T16:32:36.565394+08:00","logger":"root.ctxLogger","msg":"global debug with ctx","pid":17930,"traceID":"logging-bqana93ipt34c2lc9lgg"}
+	// {"level":"DEBUG","time":"2020-04-15 19:12:45.263333","logger":"root.ctxLogger","msg":"global debug with ctx","pid":17044,"traceID":"logging-bqbeobbipt345502logg"}
 }
 ```
 
@@ -214,6 +207,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/axiaoxin-com/logging"
 
 	"github.com/gin-gonic/gin"
@@ -221,52 +215,53 @@ import (
 
 func func1(c context.Context) {
 	// 使用CtxLogger打印带trace id的日志
-	logging.CtxLogger(c).Info("func1 will call func2")
+	logging.CtxLogger(c).Info("func1 begin")
 	func2(c)
 	// 使用logging全局方法打印带trace id的日志
-	logging.Info(c, "func2 is called")
+	logging.Info(c, "func1 end")
 }
 
 func func2(c context.Context) {
-	logging.CtxLogger(c).Info("func2 will call func3")
+	logging.CtxLogger(c).Info("func2 begin")
 	func3(c)
-	logging.Info(c, "func3 is called")
+	logging.Info(c, "func2 end")
 }
 
 func func3(c context.Context) {
-	logging.CtxLogger(c).Info("func3 be called")
+	logging.CtxLogger(c).Info("in func3")
 }
 
 func main() {
 	r := gin.Default()
 
-    // 使用默认的回调方法从Header中获取Key为traceID的值作为trace id
-    // 可以自定义方法
-    r.Use(logging.GinTraceIDMiddleware(logging.GetTraceIDFromHeader))
+	// 使用中间件注册获取trace id
+	// 使用默认的回调方法从Header中获取Key为traceID的值作为trace id
+	// 可以自定义方法
+	r.Use(logging.GinTraceIDMiddleware(logging.GetTraceIDFromHeader))
 
 	r.GET("/ping", func(c *gin.Context) {
-		logging.CtxLogger(c).Info("ping ping pong pong")
+		logging.Error(c, "ping ping pong pong")
+		// 模拟内部函数调用中打日志
 		func1(c)
 		c.String(200, "pong")
 	})
 
 	r.Run(":8080")
 }
-```
 
-请求日志：
-```json
-{"level":"INFO","time":"2020-04-14T16:35:36.151951+08:00","logger":"root.ctxLogger","msg":"ping ping pong pong","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
-{"level":"INFO","time":"2020-04-14T16:35:36.15217+08:00","logger":"root.ctxLogger","msg":"func1 will call func2","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
-{"level":"INFO","time":"2020-04-14T16:35:36.152178+08:00","logger":"root.ctxLogger","msg":"func2 will call func3","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
-{"level":"INFO","time":"2020-04-14T16:35:36.152183+08:00","logger":"root.ctxLogger","msg":"func3 be called","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
-{"level":"INFO","time":"2020-04-14T16:35:36.152189+08:00","logger":"root.ctxLogger","msg":"func3 is called","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
-{"level":"INFO","time":"2020-04-14T16:35:36.152197+08:00","logger":"root.ctxLogger","msg":"func2 is called","pid":30881,"traceID":"logging-bqanbm3ipt37h899lbu0"}
-```
+/*
+日志输出
 
-请求响应头中也包含 Trace ID：
+{"level":"ERROR","time":"2020-04-15 19:16:55.739465","logger":"root.ctxLogger","msg":"ping ping pong pong","pid":34425,"traceID":"logging-bqbeq9ript38cuae9nb0"}
+{"level":"INFO","time":"2020-04-15 19:16:55.739504","logger":"root.ctxLogger","msg":"func1 begin","pid":34425,"traceID":"logging-bqbeq9ript38cuae9nb0"}
+{"level":"INFO","time":"2020-04-15 19:16:55.739510","logger":"root.ctxLogger","msg":"func2 begin","pid":34425,"traceID":"logging-bqbeq9ript38cuae9nb0"}
+{"level":"INFO","time":"2020-04-15 19:16:55.739530","logger":"root.ctxLogger","msg":"in func3","pid":34425,"traceID":"logging-bqbeq9ript38cuae9nb0"}
+{"level":"INFO","time":"2020-04-15 19:16:55.739534","logger":"root.ctxLogger","msg":"func2 end","pid":34425,"traceID":"logging-bqbeq9ript38cuae9nb0"}
+{"level":"INFO","time":"2020-04-15 19:16:55.739540","logger":"root.ctxLogger","msg":"func1 end","pid":34425,"traceID":"logging-bqbeq9ript38cuae9nb0"}
 
-```curl
+请求响应头中也包含 Trace ID, 请求时如果指定Header `-H "traceID: x-y-z"`，demo将使用该值作为trace id
+
+curl
 curl localhost:8080/ping -v
 *   Trying 127.0.0.1...
 * TCP_NODELAY set
@@ -274,19 +269,16 @@ curl localhost:8080/ping -v
 > GET /ping HTTP/1.1
 > Host: localhost:8080
 > User-Agent: curl/7.64.1
-> Accept: */*
 >
 < HTTP/1.1 200 OK
 < Content-Type: text/plain; charset=utf-8
-< Traceid: logging-bqanbm3ipt37h899lbu0
-< Date: Tue, 14 Apr 2020 08:35:36 GMT
+< Traceid: logging-bqbeq9ript38cuae9nb0
 < Content-Length: 4
 <
 * Connection #0 to host localhost left intact
 pong* Closing connection 0
+*/
 ```
-
-请求时如果指定Header `-H "traceID: x-y-z"`，demo将使用该值作为trace id
 
 ## 动态修改 logger 日志级别
 
@@ -300,101 +292,111 @@ logging 可以在代码中对 AtomicLevel 调用 SetLevel 动态修改日志级�
 package main
 
 import (
-    "fmt"
-    "github.com/axiaoxin-com/logging"
-    "io/ioutil"
-    "net/http"
-    "strings"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
 
-    "go.uber.org/zap"
+	"github.com/axiaoxin-com/logging"
+
+	"go.uber.org/zap"
 )
 
 // level 全局变量，便于动态修改，初始化为 Debug 级别
 var level zap.AtomicLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
 
 func main() {
-    /* change log level on fly */
+	/* change log level on fly */
 
-    // 创建指定Level的logger，并开启http服务
-    options := logging.Options{
-        Level:           level,
-        AtomicLevelAddr: ":2012",
-    }
-    logger, _ := logging.NewLogger(options)
-    logger.Debug("Debug level msg", zap.Any("current level", level.Level()))
+	// 创建指定Level的logger，并开启http服务
+	options := logging.Options{
+		Level:           level,
+		AtomicLevelAddr: ":2012",
+	}
+	logger, _ := logging.NewLogger(options)
+	logger.Debug("Debug level msg", zap.Any("current level", level.Level()))
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:03:17.799767","logger":"root","caller":"example/atomiclevel.go:main:26","msg":"Debug level msg","pid":6088,"current level":"debug"}
 
-    /* 函数内部修改 */
-    // 使用SetLevel动态修改logger 日志级别为error
-    // 实际应用中可以监听配置文件中日志级别配置项的变化动态调用该函数
-    level.SetLevel(zap.ErrorLevel)
-    // Info 级别将不会被打印
-    logger.Info("Info level msg will not be logged")
-    // 只会打印error以上
-    logger.Error("Error level msg", zap.Any("current level", level.Level()))
+	// 使用SetLevel动态修改logger 日志级别为error
+	// 实际应用中可以监听配置文件中日志级别配置项的变化动态调用该函数
+	level.SetLevel(zap.ErrorLevel)
+	// Info 级别将不会被打印
+	logger.Info("Info level msg will not be logged")
+	// 只会打印error以上
+	logger.Error("Error level msg", zap.Any("current level", level.Level()))
+	// Output:
+	// {"level":"ERROR","time":"2020-04-15 18:03:17.799999","logger":"root","caller":"example/atomiclevel.go:main:34","msg":"Error level msg","pid":6088,"current level":"error","stacktrace":"main.main\n\t/Users/ashin/go/src/logging/example/atomiclevel.go:34\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
 
-    // Output:
-    // {"level":"DEBUG","time":"2020-04-13T19:34:46.12339+08:00","logger":"root","caller":"example/atomiclevel.go:18","msg":"Debug level msg","pid":21546,"current level":"debug"}
-    // {"level":"ERROR","time":"2020-04-13T19:34:46.123555+08:00","logger":"root","caller":"example/atomiclevel.go:26","msg":"Error Level msg","pid":21546,"current level":"error"}
+	// 通过HTTP方式动态修改当前的error level为debug level
+	// 查询当前 level
+	url := "http://localhost" + options.AtomicLevelAddr
+	resp, _ := http.Get(url)
+	content, _ := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	fmt.Println("currentlevel:", string(content))
+	// Output: currentlevel: {"level":"error"}
 
-    /* 在外部通过HTTP接口修改 */
-    // 通过HTTP方式动态修改当前的error level为debug level
-    // 查询当前 level
-    url := "http://localhost" + options.AtomicLevelAddr
-    resp, _ := http.Get(url)
-    content, _ := ioutil.ReadAll(resp.Body)
-    defer resp.Body.Close()
-    fmt.Println("currentlevel:", string(content))
-    logger.Info("Info level will not be logged")
+	logger.Info("Info level will not be logged")
 
-    // 修改level为debug
-    c := &http.Client{}
-    req, _ := http.NewRequest("PUT", url, strings.NewReader(`{"level": "debug"}`))
-    resp, _ = c.Do(req)
-    content, _ = ioutil.ReadAll(resp.Body)
-    defer resp.Body.Close()
-    fmt.Println("newlevel:", string(content))
+	// 修改level为debug
+	c := &http.Client{}
+	req, _ := http.NewRequest("PUT", url, strings.NewReader(`{"level": "debug"}`))
+	resp, _ = c.Do(req)
+	content, _ = ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+	fmt.Println("newlevel:", string(content))
+	// Output: newlevel: {"level":"debug"}
 
-    logger.Debug("level is changed on fly!")
+	logger.Debug("level is changed on fly!")
 
-    // Output:
-    // currentlevel: {"level":"error"}
-    //
-    // newlevel: {"level":"debug"}
-    //
-    // {"level":"DEBUG","time":"2020-04-13T20:04:25.694969+08:00","logger":"root","caller":"example/atomiclevel.go:56","msg":"level is changed on fly!","pid":55317}
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 18:03:17.805293","logger":"root","caller":"example/atomiclevel.go:main:57","msg":"level is changed on fly!","pid":6088}
 }
 ```
 
-## 自定义 logger EncoderConfig 字段名
+## 自定义 logger Encoder 配置
 
 **示例**：
 
-```
-import "github.com/axiaoxin-com/logging"
+```golang
+package main
 
-options := logging.Options{
-    Name: "apiserver",
-    EncoderConfig: zapcore.EncoderConfig{
-        TimeKey:        "LogTime",
-        LevelKey:       "LogLevel",
-        NameKey:        "ServiceName",
-        CallerKey:      "LogLine",
-        MessageKey:     "Message",
-        StacktraceKey:  "Stacktrace",
-        LineEnding:     zapcore.DefaultLineEnding,
-        EncodeLevel:    zapcore.CapitalLevelEncoder,
-        EncodeTime:     zapcore.RFC3339NanoTimeEncoder,
-        EncodeDuration: zapcore.SecondsDurationEncoder,
-        EncodeCaller:   zapcore.ShortCallerEncoder,
-    },
+import (
+	"github.com/axiaoxin-com/logging"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
+
+func main() {
+	/* custom logger encoder */
+	options := logging.Options{
+		Name: "apiserver",
+		EncoderConfig: zapcore.EncoderConfig{
+			TimeKey:        "Time",
+			LevelKey:       "Level",
+			NameKey:        "Logger",
+			CallerKey:      "Caller",
+			MessageKey:     "Message",
+			StacktraceKey:  "Stacktrace",
+			LineEnding:     zapcore.DefaultLineEnding,
+			EncodeLevel:    zapcore.CapitalLevelEncoder,
+			EncodeTime:     logging.TimeEncoder, // 使用logging的time格式
+			EncodeDuration: zapcore.SecondsDurationEncoder,
+			EncodeCaller:   logging.CallerEncoder, // 使用logging的caller格式
+		},
+		DisableCaller: false,
+	}
+	logger, _ := logging.NewLogger(options)
+	logger.Debug("EncoderConfig Debug", zap.Reflect("Tags", map[string]interface{}{
+		"Status":     "200 OK",
+		"StatusCode": 200,
+		"Latency":    0.075,
+	}))
+	// Output:
+	// {"Level":"DEBUG","Time":"2020-04-15 19:23:44.373302","Logger":"apiserver","Caller":"example/encoder.go:main:30","Message":"EncoderConfig Debug","pid":66937,"Tags":{"Latency":0.075,"Status":"200 OK","StatusCode":200}}
 }
-logger, _ = logging.NewLogger(options)
-logger.Debug("EncoderConfig Debug", zap.Reflect("Tags", map[string]interface{}{
-    "Status":     "200 OK",
-    "StatusCode": 200,
-    "Latency":    0.075,
-}))
-// {"LogLevel":"DEBUG","LogTime":"2020-04-13T14:51:39.478605+08:00","ServiceName":"apiserver","LogLine":"example/logging.go:72","Message":"EncoderConfig Debug","pid":50014,"Tags":{"Latency":0.075,"Status":"200 OK","StatusCode":200}}
 ```
 
 
@@ -409,23 +411,28 @@ logger.Debug("EncoderConfig Debug", zap.Reflect("Tags", map[string]interface{}{
 package main
 
 import (
-    "github.com/axiaoxin-com/logging"
+	"github.com/axiaoxin-com/logging"
 )
 
 // Options 传入 LumberjacSink，并在 OutputPaths 中添加对应 scheme 就能将日志保存到文件并自动 rotate
 func main() {
-    /* 使用logger将日志输出到x.log */
-    // 创建一个lumberjack的sink，scheme 为 lumberjack，日志文件为 /tmp/x.log , 保存 7 天，保留 10 份文件，文件大小超过 100M，使用压缩备份，压缩文件名使用 localtime
-    sink := logging.NewLumberjackSink("lumberjack", "/tmp/x.log", 7, 10, 100, true, true)
-    // 创建logger时，设置该sink，OutputPaths 设置为对应 scheme
-    options := logging.Options{
-        LumberjackSink: sink,
-        // 使用 sink 中设置的url scheme 即 lumberjack: 或 lumberjack://
-        OutputPaths: []string{"lumberjack:"},
-    }
-    // 创建logger
-    logger, _ := logging.NewLogger(options)
-    // 日志将打到x.log文件中
-    logger.Debug("xxx")
+	// scheme 为 lumberjack，日志文件为 /tmp/x.log , 保存 7 天，保留 10 份文件，文件大小超过 100M，使用压缩备份，压缩文件名使用 localtime
+	sink := logging.NewLumberjackSink("lumberjack", "/tmp/x.log", 7, 10, 100, true, true)
+	options := logging.Options{
+		LumberjackSink: sink,
+		// 使用 sink 中设置的 scheme 即 lumberjack: 或 lumberjack:// 并指定保存日志到指定文件，日志文件将自动按 LumberjackSink 的配置做 rotate
+		OutputPaths: []string{"lumberjack:"},
+	}
+	logger, _ := logging.NewLogger(options)
+	logger.Debug("xxx")
+
+	sink2 := logging.NewLumberjackSink("lumberjack2", "/tmp/x2.log", 7, 10, 100, true, true)
+	options2 := logging.Options{
+		LumberjackSink: sink2,
+		// 使用 sink 中设置的 scheme 即 lumberjack: 或 lumberjack:// 并指定保存日志到指定文件，日志文件将自动按 LumberjackSink 的配置做 rotate
+		OutputPaths: []string{"lumberjack2:"},
+	}
+	logger2, _ := logging.NewLogger(options2)
+	logger2.Debug("yyy")
 }
 ```

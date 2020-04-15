@@ -18,8 +18,10 @@ func main() {
 	ctxlogger := logging.CtxLogger(ctx)
 	// log with trace id
 	ctxlogger.Debug("ctxlogger with trace id debug")
+	// Output:
+	// {"level":"DEBUG","time":"2020-04-15 19:12:45.263227","logger":"root.ctxLogger","msg":"ctxlogger with trace id debug","pid":17044,"traceID":"logging-bqbeobbipt345502logg"}
+
 	logging.Debug(ctx, "global debug with ctx")
 	// Output:
-	// {"level":"DEBUG","time":"2020-04-14T16:32:36.565279+08:00","logger":"root.ctxLogger","msg":"ctxlogger with trace id debug","pid":17930,"traceID":"logging-bqana93ipt34c2lc9lgg"}
-	// {"level":"DEBUG","time":"2020-04-14T16:32:36.565394+08:00","logger":"root.ctxLogger","msg":"global debug with ctx","pid":17930,"traceID":"logging-bqana93ipt34c2lc9lgg"}
+	// {"level":"DEBUG","time":"2020-04-15 19:12:45.263333","logger":"root.ctxLogger","msg":"global debug with ctx","pid":17044,"traceID":"logging-bqbeobbipt345502logg"}
 }
