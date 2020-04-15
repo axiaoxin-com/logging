@@ -334,7 +334,7 @@ func main() {
 
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-13T19:34:46.12339+08:00","logger":"root","caller":"example/atomiclevel.go:18","msg":"Debug level msg","pid":21546,"current level":"debug"}
-	// {"level":"ERROR","time":"2020-04-13T19:34:46.123555+08:00","logger":"root","caller":"example/atomiclevel.go:26","msg":"Error Level msg","pid":21546,"current level":"error","stacktrace":"main.main\n\t/Users/ashin/go/src/logging/example/atomiclevel.go:26\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
+	// {"level":"ERROR","time":"2020-04-13T19:34:46.123555+08:00","logger":"root","caller":"example/atomiclevel.go:26","msg":"Error Level msg","pid":21546,"current level":"error"}
 
     /* 在外部通过HTTP接口修改 */
 	// 通过HTTP方式动态修改当前的error level为debug level

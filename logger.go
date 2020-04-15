@@ -88,7 +88,7 @@ func init() {
 		OutputPaths:       defaultOutPaths,
 		InitialFields:     defaultInitialFields,
 		DisableCaller:     true,
-		DisableStacktrace: false,
+		DisableStacktrace: true,
 		SentryClient:      nil,
 		AtomicLevelAddr:   defaultAtomicLevelAddr,
 		EncoderConfig:     defaultEncoderConfig,
