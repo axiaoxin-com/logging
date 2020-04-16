@@ -32,8 +32,8 @@ var (
 	}
 	// defaultLoggerName 默认logger name为root
 	defaultLoggerName = "root"
-	// defaultLevel 默认日志级别为debug
-	defaultLevel           = zap.NewAtomicLevelAt(zap.DebugLevel)
+	// defaultLoggerLevel 默认logger日志级别默认为debug
+	defaultLoggerLevel     = zap.NewAtomicLevelAt(zap.DebugLevel)
 	defaultAtomicLevelAddr = ":1903"
 	// defaultEncoderConfig 默认的日志字段名配置
 	defaultEncoderConfig = zapcore.EncoderConfig{
@@ -81,7 +81,7 @@ type Options struct {
 func init() {
 	options := Options{
 		Name:              defaultLoggerName,
-		Level:             defaultLevel,
+		Level:             defaultLoggerLevel,
 		Format:            "json",
 		OutputPaths:       defaultOutPaths,
 		InitialFields:     defaultInitialFields,
@@ -104,7 +104,7 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	cfg := zap.Config{}
 	// 设置日志级别
 	if options.Level == (zap.AtomicLevel{}) {
-		cfg.Level = defaultLevel
+		cfg.Level = defaultLoggerLevel
 	} else {
 		cfg.Level = options.Level
 	}
@@ -231,4 +231,9 @@ func ReplaceDefaultLogger(newLogger *zap.Logger) func() {
 	// 替换为新logger
 	logger = newLogger
 	return func() { ReplaceDefaultLogger(prevLogger) }
+}
+
+// DefaultLoggerLevel 返回默认logger的level
+func DefaultLoggerLevel() zap.AtomicLevel {
+	return defaultLoggerLevel
 }

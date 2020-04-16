@@ -386,9 +386,25 @@ func main() {
 	// Output: newlevel: {"level":"debug"}
 
 	logger.Debug("level is changed on fly!")
-
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:03:17.805293","logger":"root","caller":"example/atomiclevel.go:main:57","msg":"level is changed on fly!","pid":6088}
+
+	/* 修改默认logger日志级别 */
+	logging.Info(nil, "default logger level")
+	// 修改前 Output:
+	// {"level":"INFO","time":"2020-04-16 13:33:50.178265","logger":"root.ctxLogger","msg":"default logger level","pid":45311}
+
+	// 获取默认logger的level
+	defaultLoggerLevel := logging.DefaultLoggerLevel()
+	// 修改level为error
+	defaultLoggerLevel.SetLevel(zap.ErrorLevel)
+
+	// info 将不会打印
+	logging.Info(nil, "info level will not be print")
+	logging.Error(nil, "new level")
+	// Output:
+	// {"level":"ERROR","time":"2020-04-16 13:33:50.178273","logger":"root.ctxLogger","msg":"new level","pid":45311}
+
 }
 ```
 
