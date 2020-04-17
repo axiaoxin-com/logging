@@ -2,13 +2,26 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/axiaoxin-com/logging"
+	"github.com/getsentry/sentry-go"
 
 	"go.uber.org/zap"
 )
 
 func main() {
+	/* Error sentry dsn env */
+	// 全局方法使用的默认logger在默认情况下不支持sentry上报，通过配置环境变量LoggingSentryDSN后自动支持
+	logging.Error(nil, "dsn env")
+	// 如果环境变量配置了sentry dsn，则会创建一个默认sentry client并初始化sentry，可以通过DefaultSentryClient 获取原始的sentry client
+	if logging.DefaultSentryClient() != nil {
+		// 如果已经初始化过sentry，则可以使用sentry hub直接上报数据到sentry
+		sentry.CaptureMessage("hello sentry hub msg!")
+		// waiting for report complete
+		time.Sleep(2 * time.Second)
+	}
+
 	/* zap Debug */
 	logging.Debug(nil, "Debug message", zap.Int("intType", 123), zap.Bool("boolType", false), zap.Ints("sliceInt", []int{1, 2, 3}), zap.Reflect("map", map[string]interface{}{"i": 1, "s": "s"}))
 	// Output:

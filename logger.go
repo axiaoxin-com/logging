@@ -12,6 +12,7 @@ package logging
 import (
 	"log"
 	"net/http"
+	"os"
 	"reflect"
 	"strings"
 	"syscall"
@@ -24,6 +25,8 @@ import (
 var (
 	// logger default global zap Logger with pid field
 	logger *zap.Logger
+	// 默认sentry client
+	defaultSentryClient *sentry.Client
 	// defaultOutPaths zap日志默认输出位置
 	defaultOutPaths = []string{"stderr"}
 	// defaultInitialFields 默认初始字段为进程id
@@ -77,8 +80,29 @@ type Options struct {
 	LumberjackSink    *LumberjackSink        // lumberjack sink支持日志文件rotate
 }
 
+const (
+	// SentryDSNEnvKey 引入包时默认创建logger将尝试从该环境变量名中获取sentry dsn
+	SentryDSNEnvKey = "LoggingSentryDSN"
+	// SentryDebugEnvKey 尝试从该环境变量中获取sentry是否开启debug模式
+	SentryDebugEnvKey = "LoggingSentryDebug"
+)
+
 // init the global default logger
 func init() {
+	var err error
+	// 尝试从环境变量获取sentry dsn
+	if dsn := os.Getenv(SentryDSNEnvKey); dsn != "" {
+		debugStr := os.Getenv(SentryDebugEnvKey)
+		debug := false
+		if strings.ToLower(debugStr) != "" {
+			debug = true
+		}
+		defaultSentryClient, err = GetSentryClientByDSN(dsn, debug)
+		if err != nil {
+			log.Println(err)
+		}
+	}
+
 	options := Options{
 		Name:              defaultLoggerName,
 		Level:             defaultLoggerLevel,
@@ -87,12 +111,11 @@ func init() {
 		InitialFields:     defaultInitialFields,
 		DisableCaller:     true,
 		DisableStacktrace: true,
-		SentryClient:      nil,
+		SentryClient:      defaultSentryClient,
 		AtomicLevelAddr:   defaultAtomicLevelAddr,
 		EncoderConfig:     defaultEncoderConfig,
 		LumberjackSink:    nil,
 	}
-	var err error
 	logger, err = NewLogger(options)
 	if err != nil {
 		log.Println(err)
@@ -236,4 +259,9 @@ func ReplaceDefaultLogger(newLogger *zap.Logger) func() {
 // DefaultLoggerLevel 返回默认logger的level
 func DefaultLoggerLevel() zap.AtomicLevel {
 	return defaultLoggerLevel
+}
+
+// DefaultSentryClient 返回默认sentry client
+func DefaultSentryClient() *sentry.Client {
+	return defaultSentryClient
 }

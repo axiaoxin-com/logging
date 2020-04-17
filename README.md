@@ -4,7 +4,7 @@ logging 简单封装了在日常使用 [zap](https://github.com/uber-go/zap) 打
 
 - 提供快速使用 zap 打印日志的方法，除 zap 的 DPanic、DPanicf 方法外所有日志打印方法开箱即用
 - 提供多种快速创建 logger 的方法
-- 支持在使用 Error 及其以上级别打印日志时自动将该事件上报到 **Sentry**
+- 集成 **Sentry**，设置DSN后可直接使用 Sentry，支持在使用 Error 及其以上级别打印日志时自动将该事件上报到 Sentry
 - 支持从 context.Context/gin.Context 中创建、获取带有 **Trace ID** 的 logger
 - 提供 gin 中 Trace ID 的中间件，支持自定义方法获取 Trace ID
 - 支持服务内部函数方式和外部 HTTP 方式**动态调整日志级别**，无需修改配置、重启服务
@@ -21,12 +21,12 @@ go get -u github.com/axiaoxin-com/logging
 
 ## 开箱即用
 
-logging 提供的开箱即用方法都是使用自身默认 logger 克隆出的 CtxLogger 实际执行的，
-在 logging 被 import 时，会生成内部使用的默认 logger，
-默认 logger 使用 JSON 格式打印日志内容到 stderr ，
-不带 Sentry 上报功能，
-可通过 HTTP 调用 `curl -XPUT "http://localhost:1903" -d '{"level": "info"}'` 动态修改日志级别，
-默认带有初始字段 pid 打印进程 ID
+logging 提供的开箱即用方法都是使用自身默认 logger 克隆出的 CtxLogger 实际执行的。
+在 logging 被 import 时，会生成内部使用的默认 logger。
+默认 logger 使用 JSON 格式打印日志内容到 stderr 。
+默认不带 Sentry 上报功能，可以通过设置环境变量或者替换logger方法支持。
+可通过 HTTP 调用 `curl -XPUT "http://localhost:1903" -d '{"level": "info"}'` 动态修改日志级别。
+默认带有初始字段 pid 打印进程 ID。
 
 开箱即用的方法第一个参数为 context.Context, 可以传入 gin.Context，会尝试从其中获取 Trace ID 进行日志打印，无需 Trace ID 可以直接传 nil
 
@@ -37,13 +37,26 @@ package main
 
 import (
 	"context"
+	"time"
 
 	"github.com/axiaoxin-com/logging"
+	"github.com/getsentry/sentry-go"
 
 	"go.uber.org/zap"
 )
 
 func main() {
+	/* Error sentry dsn env */
+	// 全局方法使用的默认logger在默认情况下不支持sentry上报，通过配置环境变量LoggingSentryDSN后自动支持
+	logging.Error(nil, "dsn env")
+	// 如果环境变量配置了sentry dsn，则会创建一个默认sentry client并初始化sentry，可以通过DefaultSentryClient 获取原始的sentry client
+	if logging.DefaultSentryClient() != nil {
+		// 如果已经初始化过sentry，则可以使用sentry hub直接上报数据到sentry
+		sentry.CaptureMessage("hello sentry hub msg!")
+		// waiting for report complete
+		time.Sleep(2 * time.Second)
+	}
+
 	/* zap Debug */
 	logging.Debug(nil, "Debug message", zap.Int("intType", 123), zap.Bool("boolType", false), zap.Ints("sliceInt", []int{1, 2, 3}), zap.Reflect("map", map[string]interface{}{"i": 1, "s": "s"}))
 	// Output:
@@ -77,7 +90,11 @@ func main() {
 }
 ```
 
-可以通过替换默认 logger 来实现让全局方法支持 Error 以上级别自动上报，以下示例：
+全局开箱即用的方法默认不支持sentry自动上报Error级别的事件，有两种方式可以使其支持：
+
+1. 通过设置系统环境变量 `LoggingSentryDSN` 和 `LoggingSentryDebug` 来实现自动上报。
+
+2. 也可以通过替换默认 logger 来实现让全局方法支持 Error 以上级别自动上报，以下示例：
 
 ```golang
 // 默认的 logging 全局开箱即用的方法（如： logging.Debug , logging.Debugf 等）都是使用默认 logger 执行的，

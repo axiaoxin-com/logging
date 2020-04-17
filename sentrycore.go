@@ -175,7 +175,7 @@ func GetSentryClientByDSN(dsn string, debug bool) (*sentry.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	// optional: init sentry hub
+	// init sentry hub
 	sentry.Init(options)
 	return client, nil
 }
