@@ -20,9 +20,9 @@ func main() {
 			StacktraceKey:  "Stacktrace",
 			LineEnding:     zapcore.DefaultLineEnding,
 			EncodeLevel:    zapcore.CapitalLevelEncoder,
-			EncodeTime:     logging.TimeEncoder, // 使用logging的time格式
+			EncodeTime:     logging.TimeEncoder, // 使用 logging 的 time 格式
 			EncodeDuration: zapcore.SecondsDurationEncoder,
-			EncodeCaller:   logging.CallerEncoder, // 使用logging的caller格式
+			EncodeCaller:   logging.CallerEncoder, // 使用 logging 的 caller 格式
 		},
 		DisableCaller: false,
 	}

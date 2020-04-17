@@ -12,11 +12,11 @@ import (
 
 func main() {
 	/* Error sentry dsn env */
-	// 全局方法使用的默认logger在默认情况下不支持sentry上报，通过配置环境变量LoggingSentryDSN后自动支持
+	// 全局方法使用的默认 logger 在默认情况下不支持 sentry 上报，通过配置环境变量 LoggingSentryDSN 后自动支持
 	logging.Error(nil, "dsn env")
-	// 如果环境变量配置了sentry dsn，则会创建一个默认sentry client并初始化sentry，可以通过DefaultSentryClient 获取原始的sentry client
+	// 如果环境变量配置了 sentry dsn ，则会创建一个默认 sentry client 并初始化 sentry ，可以通过 DefaultSentryClient 获取原始的 sentry client
 	if logging.DefaultSentryClient() != nil {
-		// 如果已经初始化过sentry，则可以使用sentry hub直接上报数据到sentry
+		// 如果已经初始化过 sentry ，则可以使用 sentry hub 直接上报数据到 sentry
 		sentry.CaptureMessage("hello sentry hub msg!")
 		// waiting for report complete
 		time.Sleep(2 * time.Second)

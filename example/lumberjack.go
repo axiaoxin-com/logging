@@ -4,9 +4,9 @@ import (
 	"github.com/axiaoxin-com/logging"
 )
 
-// Options 传入 LumberjacSink，并在 OutputPaths 中添加对应 scheme 就能将日志保存到文件并自动 rotate
+// Options 传入 LumberjacSink ，并在 OutputPaths 中添加对应 scheme 就能将日志保存到文件并自动 rotate
 func main() {
-	// scheme 为 lumberjack，日志文件为 /tmp/x.log , 保存 7 天，保留 10 份文件，文件大小超过 100M，使用压缩备份，压缩文件名使用 localtime
+	// scheme 为 lumberjack ，日志文件为 /tmp/x.log , 保存 7 天，保留 10 份文件，文件大小超过 100M ，使用压缩备份，压缩文件名使用 localtime
 	sink := logging.NewLumberjackSink("lumberjack", "/tmp/x.log", 7, 10, 100, true, true)
 	options := logging.Options{
 		LumberjackSink: sink,

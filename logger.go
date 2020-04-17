@@ -25,17 +25,17 @@ import (
 var (
 	// logger default global zap Logger with pid field
 	logger *zap.Logger
-	// 默认sentry client
+	// 默认 sentry client
 	defaultSentryClient *sentry.Client
-	// defaultOutPaths zap日志默认输出位置
+	// defaultOutPaths zap 日志默认输出位置
 	defaultOutPaths = []string{"stderr"}
-	// defaultInitialFields 默认初始字段为进程id
+	// defaultInitialFields 默认初始字段为进程 id
 	defaultInitialFields = map[string]interface{}{
 		"pid": syscall.Getpid(),
 	}
-	// defaultLoggerName 默认logger name为root
+	// defaultLoggerName 默认 logger name 为 root
 	defaultLoggerName = "root"
-	// defaultLoggerLevel 默认logger日志级别默认为debug
+	// defaultLoggerLevel 默认 logger 日志级别默认为 debug
 	defaultLoggerLevel     = zap.NewAtomicLevelAt(zap.DebugLevel)
 	defaultAtomicLevelAddr = ":1903"
 	// defaultEncoderConfig 默认的日志字段名配置
@@ -72,25 +72,25 @@ type Options struct {
 	Format            string                 // 日志格式
 	OutputPaths       []string               // 日志输出位置
 	InitialFields     map[string]interface{} // 日志初始字段
-	DisableCaller     bool                   // 是否关闭打印caller
-	DisableStacktrace bool                   // 是否关闭打印stackstrace
-	SentryClient      *sentry.Client         // sentry客户端
-	AtomicLevelAddr   string                 // http动态修改日志级别的地址，传空不启用
-	EncoderConfig     zapcore.EncoderConfig  // 配置日志地点key的名称
-	LumberjackSink    *LumberjackSink        // lumberjack sink支持日志文件rotate
+	DisableCaller     bool                   // 是否关闭打印 caller
+	DisableStacktrace bool                   // 是否关闭打印 stackstrace
+	SentryClient      *sentry.Client         // sentry 客户端
+	AtomicLevelAddr   string                 // http 动态修改日志级别的地址，传空不启用
+	EncoderConfig     zapcore.EncoderConfig  // 配置日志地点 key 的名称
+	LumberjackSink    *LumberjackSink        // lumberjack sink 支持日志文件 rotate
 }
 
 const (
-	// SentryDSNEnvKey 引入包时默认创建logger将尝试从该环境变量名中获取sentry dsn
+	// SentryDSNEnvKey 引入包时默认创建 logger 将尝试从该环境变量名中获取 sentry dsn
 	SentryDSNEnvKey = "LoggingSentryDSN"
-	// SentryDebugEnvKey 尝试从该环境变量中获取sentry是否开启debug模式
+	// SentryDebugEnvKey 尝试从该环境变量中获取 sentry 是否开启 debug 模式
 	SentryDebugEnvKey = "LoggingSentryDebug"
 )
 
 // init the global default logger
 func init() {
 	var err error
-	// 尝试从环境变量获取sentry dsn
+	// 尝试从环境变量获取 sentry dsn
 	if dsn := os.Getenv(SentryDSNEnvKey); dsn != "" {
 		debugStr := os.Getenv(SentryDebugEnvKey)
 		debug := false
@@ -131,13 +131,13 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	} else {
 		cfg.Level = options.Level
 	}
-	// 设置encoding 默认为json
+	// 设置 encoding 默认为 json
 	if strings.ToLower(options.Format) == "console" {
 		cfg.Encoding = "console"
 	} else {
 		cfg.Encoding = "json"
 	}
-	// 设置output 没有传参默认全部输出到stderr
+	// 设置 output 没有传参默认全部输出到 stderr
 	if len(options.OutputPaths) == 0 {
 		cfg.OutputPaths = defaultOutPaths
 		cfg.ErrorOutputPaths = defaultOutPaths
@@ -145,49 +145,49 @@ func NewLogger(options Options) (*zap.Logger, error) {
 		cfg.OutputPaths = options.OutputPaths
 		cfg.ErrorOutputPaths = options.OutputPaths
 	}
-	// 设置InitialFields 没有传参使用默认字段
+	// 设置 InitialFields 没有传参使用默认字段
 	if len(options.InitialFields) == 0 {
 		cfg.InitialFields = defaultInitialFields
 	} else {
 		cfg.InitialFields = options.InitialFields
 	}
-	// 设置disablecaller
+	// 设置 disablecaller
 	cfg.DisableCaller = options.DisableCaller
-	// 设置disablestacktrace
+	// 设置 disablestacktrace
 	cfg.DisableStacktrace = options.DisableStacktrace
 
-	// 设置encoderConfig
+	// 设置 encoderConfig
 	if reflect.DeepEqual(options.EncoderConfig, zapcore.EncoderConfig{}) {
 		cfg.EncoderConfig = defaultEncoderConfig
 	} else {
 		cfg.EncoderConfig = options.EncoderConfig
 	}
 
-	// Sampling实现了日志的流控功能，或者叫采样配置，主要有两个配置参数，Initial和Thereafter，实现的效果是在1s的时间单位内，如果某个日志级别下同样内容的日志输出数量超过了Initial的数量，那么超过之后，每隔Thereafter的数量，才会再输出一次。是一个对日志输出的保护功能。
+	// Sampling 实现了日志的流控功能，或者叫采样配置，主要有两个配置参数， Initial 和 Thereafter ，实现的效果是在 1s 的时间单位内，如果某个日志级别下同样内容的日志输出数量超过了 Initial 的数量，那么超过之后，每隔 Thereafter 的数量，才会再输出一次。是一个对日志输出的保护功能。
 	cfg.Sampling = &zap.SamplingConfig{
 		Initial:    100,
 		Thereafter: 100,
 	}
 
-	// 注册 lumberjack sink，支持Outputs指定为文件时可以使用lumberjack对日志文件自动rotate
+	// 注册 lumberjack sink ，支持 Outputs 指定为文件时可以使用 lumberjack 对日志文件自动 rotate
 	if options.LumberjackSink != nil {
 		if err := RegisterLumberjackSink(options.LumberjackSink); err != nil {
 			Error(nil, "RegisterSink error", zap.Error(err))
 		}
 	}
 
-	// 生成logger
+	// 生成 logger
 	logger, err := cfg.Build()
 	if err != nil {
 		return nil, err
 	}
 
-	// 如果传了sentryclient则设置sentrycore
+	// 如果传了 sentryclient 则设置 sentrycore
 	if options.SentryClient != nil {
 		logger = SentryAttach(logger, options.SentryClient)
 	}
 
-	// 设置logger名字，没有传参使用默认名字
+	// 设置 logger 名字，没有传参使用默认名字
 	if options.Name != "" {
 		logger = logger.Named(options.Name)
 	} else {
@@ -246,22 +246,22 @@ func DefaultAtomicLevelAddr() string {
 	return defaultAtomicLevelAddr
 }
 
-// ReplaceDefaultLogger 替换默认的全局logger为传入的新logger
-// 返回函数，调用它可以恢复全局logger为上一次的logger
+// ReplaceDefaultLogger 替换默认的全局 logger 为传入的新 logger
+// 返回函数，调用它可以恢复全局 logger 为上一次的 logger
 func ReplaceDefaultLogger(newLogger *zap.Logger) func() {
-	// 备份原始logger以便恢复
+	// 备份原始 logger 以便恢复
 	prevLogger := logger
-	// 替换为新logger
+	// 替换为新 logger
 	logger = newLogger
 	return func() { ReplaceDefaultLogger(prevLogger) }
 }
 
-// DefaultLoggerLevel 返回默认logger的level
+// DefaultLoggerLevel 返回默认 logger 的 level
 func DefaultLoggerLevel() zap.AtomicLevel {
 	return defaultLoggerLevel
 }
 
-// DefaultSentryClient 返回默认sentry client
+// DefaultSentryClient 返回默认 sentry client
 func DefaultSentryClient() *sentry.Client {
 	return defaultSentryClient
 }

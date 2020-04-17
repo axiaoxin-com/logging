@@ -2,9 +2,9 @@
 
 logging 简单封装了在日常使用 [zap](https://github.com/uber-go/zap) 打日志时的常用方法。
 
-- 提供快速使用 zap 打印日志的方法，除 zap 的 DPanic、DPanicf 方法外所有日志打印方法开箱即用
+- 提供快速使用 zap 打印日志的方法，除 zap 的 DPanic 、 DPanicf 方法外所有日志打印方法开箱即用
 - 提供多种快速创建 logger 的方法
-- 集成 **Sentry**，设置DSN后可直接使用 Sentry，支持在使用 Error 及其以上级别打印日志时自动将该事件上报到 Sentry
+- 集成 **Sentry**，设置 DSN 后可直接使用 Sentry ，支持在使用 Error 及其以上级别打印日志时自动将该事件上报到 Sentry
 - 支持从 context.Context/gin.Context 中创建、获取带有 **Trace ID** 的 logger
 - 提供 gin 中 Trace ID 的中间件，支持自定义方法获取 Trace ID
 - 支持服务内部函数方式和外部 HTTP 方式**动态调整日志级别**，无需修改配置、重启服务
@@ -22,13 +22,13 @@ go get -u github.com/axiaoxin-com/logging
 ## 开箱即用
 
 logging 提供的开箱即用方法都是使用自身默认 logger 克隆出的 CtxLogger 实际执行的。
-在 logging 被 import 时，会生成内部使用的默认 logger。
+在 logging 被 import 时，会生成内部使用的默认 logger 。
 默认 logger 使用 JSON 格式打印日志内容到 stderr 。
-默认不带 Sentry 上报功能，可以通过设置环境变量或者替换logger方法支持。
+默认不带 Sentry 上报功能，可以通过设置环境变量或者替换 logger 方法支持。
 可通过 HTTP 调用 `curl -XPUT "http://localhost:1903" -d '{"level": "info"}'` 动态修改日志级别。
-默认带有初始字段 pid 打印进程 ID。
+默认带有初始字段 pid 打印进程 ID 。
 
-开箱即用的方法第一个参数为 context.Context, 可以传入 gin.Context，会尝试从其中获取 Trace ID 进行日志打印，无需 Trace ID 可以直接传 nil
+开箱即用的方法第一个参数为 context.Context, 可以传入 gin.Context ，会尝试从其中获取 Trace ID 进行日志打印，无需 Trace ID 可以直接传 nil
 
 **示例**
 
@@ -47,11 +47,11 @@ import (
 
 func main() {
 	/* Error sentry dsn env */
-	// 全局方法使用的默认logger在默认情况下不支持sentry上报，通过配置环境变量LoggingSentryDSN后自动支持
+	// 全局方法使用的默认 logger 在默认情况下不支持 sentry 上报，通过配置环境变量 LoggingSentryDSN 后自动支持
 	logging.Error(nil, "dsn env")
-	// 如果环境变量配置了sentry dsn，则会创建一个默认sentry client并初始化sentry，可以通过DefaultSentryClient 获取原始的sentry client
+	// 如果环境变量配置了 sentry dsn ，则会创建一个默认 sentry client 并初始化 sentry ，可以通过 DefaultSentryClient 获取原始的 sentry client
 	if logging.DefaultSentryClient() != nil {
-		// 如果已经初始化过sentry，则可以使用sentry hub直接上报数据到sentry
+		// 如果已经初始化过 sentry ，则可以使用 sentry hub 直接上报数据到 sentry
 		sentry.CaptureMessage("hello sentry hub msg!")
 		// waiting for report complete
 		time.Sleep(2 * time.Second)
@@ -90,7 +90,7 @@ func main() {
 }
 ```
 
-全局开箱即用的方法默认不支持sentry自动上报Error级别的事件，有两种方式可以使其支持：
+全局开箱即用的方法默认不支持 sentry 自动上报 Error 级别的事件，有两种方式可以使其支持：
 
 1. 通过设置系统环境变量 `LoggingSentryDSN` 和 `LoggingSentryDebug` 来实现自动上报。
 
@@ -98,7 +98,7 @@ func main() {
 
 ```golang
 // 默认的 logging 全局开箱即用的方法（如： logging.Debug , logging.Debugf 等）都是使用默认 logger 执行的，
-// 默认 logger 不支持 Sentry 和输出日志到文件，可以通过创建一个新的 logger，
+// 默认 logger 不支持 Sentry 和输出日志到文件，可以通过创建一个新的 logger ，
 // 再使用 ReplaceDefaultLogger 方法替换默认 logger 为新的 logger 来解决。
 
 package main
@@ -127,15 +127,15 @@ func main() {
 	// 替换默认 logger
 	resetLogger := logging.ReplaceDefaultLogger(logger)
 
-	// 全局方法将使用新的 logger，上报 sentry 并输出到文件
+	// 全局方法将使用新的 logger ，上报 sentry 并输出到文件
 	logging.Error(nil, "ReplaceDefaultLogger")
-	// Output并保存到文件:
+	// Output 并保存到文件:
 	// {"level":"ERROR","time":"2020-04-15 20:09:23.661927","logger":"replacedLogger.ctxLogger","caller":"logging/global.go:Error:166","msg":"ReplaceDefaultLogger","pid":73847,"stacktrace":"github.com/axiaoxin-com/logging.Error\n\t/Users/ashin/go/src/logging/global.go:166\nmain.main\n\t/Users/ashin/go/src/logging/example/replace.go:30\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
 
 	// 重置默认 logger
 	resetLogger()
 
-	// 全局方法将恢复使用原始的 logger，不再上报 sentry 和输出到文件
+	// 全局方法将恢复使用原始的 logger ，不再上报 sentry 和输出到文件
 	logging.Error(nil, "ResetDefaultLogger")
 	// Output:
 	// {"level":"ERROR","time":"2020-04-15 20:09:23.742995","logger":"root.ctxLogger","msg":"ResetDefaultLogger","pid":73847}
@@ -160,40 +160,40 @@ import (
 )
 
 func main() {
-	/* 获取默认logger */
+	/* 获取默认 logger */
 	defaultLogger := logging.DefaultLogger()
 	defaultLogger.Debug("DefaultLogger")
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548141","logger":"root","msg":"DefaultLogger","pid":68701}
 
-	/* 为默认logger设置sentry core */
+	/* 为默认 logger 设置 sentry core */
 	// logging 内部默认的 logger 不支持 sentry 上报，可以通过以下方法设置 sentry
 	// 创建 sentry 客户端
 	sentryClient, _ := logging.GetSentryClientByDSN("YOUR_SENTRY_DSN", false)
-	// 设置 sentry，使用该 logger 打印 Error 及其以上级别的日志事件将会自动上报到 Sentry
+	// 设置 sentry ，使用该 logger 打印 Error 及其以上级别的日志事件将会自动上报到 Sentry
 	defaultLogger = logging.SentryAttach(defaultLogger, sentryClient)
 
-	/* 克隆一个带有初始字段的默认logger */
-	// 初始字段可以不传，克隆的 logger 名称会是 root.subname，该 logger 打印的日志都会带上传入的字段
+	/* 克隆一个带有初始字段的默认 logger */
+	// 初始字段可以不传，克隆的 logger 名称会是 root.subname ，该 logger 打印的日志都会带上传入的字段
 	cloneDefaultLogger := logging.CloneDefaultLogger("subname", zap.String("str_field", "field_value"))
 	cloneDefaultLogger.Debug("CloneDefaultLogger")
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548271","logger":"root.subname","msg":"CloneDefaultLogger","pid":68701,"str_field":"field_value"}
 
-	/* 使用Options创建logger */
-	// 可以直接使用空Options创建默认配置项的logger
-	// 不支持 sentry 和 http 动态修改日志级别，日志输出到stderr
+	/* 使用 Options 创建 logger */
+	// 可以直接使用空 Options 创建默认配置项的 logger
+	// 不支持 sentry 和 http 动态修改日志级别，日志输出到 stderr
 	emptyOptionsLogger, _ := logging.NewLogger(logging.Options{})
 	emptyOptionsLogger.Debug("emptyOptionsLogger")
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548323","logger":"root","caller":"example/logger.go:main:48","msg":"emptyOptionsLogger","pid":68701}
 
-	// 配置Options创建logger
+	// 配置 Options 创建 logger
 	// 日志级别定义在外层，便于代码内部可以动态修改日志级别
 	level := logging.TextLevelMap["debug"]
 	options := logging.Options{
 		Name:              "root",                         // logger 名称
-		Level:             level,                          // zap 的 AtomicLevel，logger 日志级别
+		Level:             level,                          // zap 的 AtomicLevel ， logger 日志级别
 		Format:            "json",                         // 日志输出格式为 json
 		OutputPaths:       []string{"stderr"},             // 日志输出位置为 stderr
 		InitialFields:     logging.DefaultInitialFields(), // DefaultInitialFields 初始 logger 带有 pid 字段
@@ -207,7 +207,7 @@ func main() {
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548363","logger":"root","caller":"example/logger.go:main:67","msg":"optionsLogger","pid":68701}
 
-	/* 从context.Context或*gin.Context中获取或创建logger */
+	/* 从 context.Context 或*gin.Context 中获取或创建 logger */
 	ctx := context.Background()
 	ctxLogger := logging.CtxLogger(ctx, zap.String("field1", "xxx"))
 	ctxLogger.Debug("ctxLogger")
@@ -222,7 +222,7 @@ func main() {
 后续函数在内部打印日志时从 Context 中获取带有本次调用 trace id 的 logger 来打印日志几个进行调用链路跟踪。
 
 
-**示例1**: 普通函数中打印打印带 Trace ID 的日志
+**示例 1**: 普通函数中打印打印带 Trace ID 的日志
 
 ```golang
 package main
@@ -237,11 +237,11 @@ import (
 func main() {
 	// 初始化一个 context
 	ctx := context.Background()
-	// 生成一个 trace id，如果 context 是 gin.Context，会尝试从其中获取，否则尝试从 context.Context 获取，获取不到则新生成
+	// 生成一个 trace id ，如果 context 是 gin.Context ，会尝试从其中获取，否则尝试从 context.Context 获取，获取不到则新生成
 	traceID := logging.CtxTraceID(ctx)
 	// 设置 trace id 到 context 和 logger 中， 会尝试同时设置到 gin.Context 中
 	ctx = logging.Context(ctx, logging.CtxLogger(ctx), traceID)
-	// 从 context 中获取 logger，会尝试从 gin.Context 中获取，context 中没有 logger 则克隆默认 logger 作为 context logger
+	// 从 context 中获取 logger ，会尝试从 gin.Context 中获取， context 中没有 logger 则克隆默认 logger 作为 context logger
 	ctxlogger := logging.CtxLogger(ctx)
 	// log with trace id
 	ctxlogger.Debug("ctxlogger with trace id debug")
@@ -254,7 +254,7 @@ func main() {
 }
 ```
 
-**示例2**: gin 中打印带 Trace ID 的日志
+**示例 2**: gin 中打印带 Trace ID 的日志
 
 ```golang
 package main
@@ -268,10 +268,10 @@ import (
 )
 
 func func1(c context.Context) {
-	// 使用CtxLogger打印带trace id的日志
+	// 使用 CtxLogger 打印带 trace id 的日志
 	logging.CtxLogger(c).Info("func1 begin")
 	func2(c)
-	// 使用logging全局方法打印带trace id的日志
+	// 使用 logging 全局方法打印带 trace id 的日志
 	logging.Info(c, "func1 end")
 }
 
@@ -288,8 +288,8 @@ func func3(c context.Context) {
 func main() {
 	r := gin.Default()
 
-	// 使用中间件注册获取trace id
-	// 使用默认的回调方法从Header中获取Key为traceID的值作为trace id
+	// 使用中间件注册获取 trace id
+	// 使用默认的回调方法从 Header 中获取 Key 为 traceID 的值作为 trace id
 	// 可以自定义方法
 	r.Use(logging.GinTraceIDMiddleware(logging.GetTraceIDFromHeader))
 
@@ -313,7 +313,7 @@ func main() {
 {"level":"INFO","time":"2020-04-15 19:16:55.739534","logger":"root.ctxLogger","msg":"func2 end","pid":34425,"traceID":"logging-bqbeq9ript38cuae9nb0"}
 {"level":"INFO","time":"2020-04-15 19:16:55.739540","logger":"root.ctxLogger","msg":"func1 end","pid":34425,"traceID":"logging-bqbeq9ript38cuae9nb0"}
 
-请求响应头中也包含 Trace ID, 请求时如果指定Header `-H "traceID: x-y-z"`，demo将使用该值作为trace id
+请求响应头中也包含 Trace ID, 请求时如果指定 Header `-H "traceID: x-y-z"`， demo 将使用该值作为 trace id
 
 curl
 curl localhost:8080/ping -v
@@ -362,7 +362,7 @@ var level zap.AtomicLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
 func main() {
 	/* change log level on fly */
 
-	// 创建指定Level的logger，并开启http服务
+	// 创建指定 Level 的 logger ，并开启 http 服务
 	options := logging.Options{
 		Level:           level,
 		AtomicLevelAddr: ":2012",
@@ -372,17 +372,17 @@ func main() {
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:03:17.799767","logger":"root","caller":"example/atomiclevel.go:main:26","msg":"Debug level msg","pid":6088,"current level":"debug"}
 
-	// 使用SetLevel动态修改logger 日志级别为error
+	// 使用 SetLevel 动态修改 logger 日志级别为 error
 	// 实际应用中可以监听配置文件中日志级别配置项的变化动态调用该函数
 	level.SetLevel(zap.ErrorLevel)
 	// Info 级别将不会被打印
 	logger.Info("Info level msg will not be logged")
-	// 只会打印error以上
+	// 只会打印 error 以上
 	logger.Error("Error level msg", zap.Any("current level", level.Level()))
 	// Output:
 	// {"level":"ERROR","time":"2020-04-15 18:03:17.799999","logger":"root","caller":"example/atomiclevel.go:main:34","msg":"Error level msg","pid":6088,"current level":"error","stacktrace":"main.main\n\t/Users/ashin/go/src/logging/example/atomiclevel.go:34\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
 
-	// 通过HTTP方式动态修改当前的error level为debug level
+	// 通过 HTTP 方式动态修改当前的 error level 为 debug level
 	// 查询当前 level
 	url := "http://localhost" + options.AtomicLevelAddr
 	resp, _ := http.Get(url)
@@ -393,7 +393,7 @@ func main() {
 
 	logger.Info("Info level will not be logged")
 
-	// 修改level为debug
+	// 修改 level 为 debug
 	c := &http.Client{}
 	req, _ := http.NewRequest("PUT", url, strings.NewReader(`{"level": "debug"}`))
 	resp, _ = c.Do(req)
@@ -406,14 +406,14 @@ func main() {
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:03:17.805293","logger":"root","caller":"example/atomiclevel.go:main:57","msg":"level is changed on fly!","pid":6088}
 
-	/* 修改默认logger日志级别 */
+	/* 修改默认 logger 日志级别 */
 	logging.Info(nil, "default logger level")
 	// 修改前 Output:
 	// {"level":"INFO","time":"2020-04-16 13:33:50.178265","logger":"root.ctxLogger","msg":"default logger level","pid":45311}
 
-	// 获取默认logger的level
+	// 获取默认 logger 的 level
 	defaultLoggerLevel := logging.DefaultLoggerLevel()
-	// 修改level为error
+	// 修改 level 为 error
 	defaultLoggerLevel.SetLevel(zap.ErrorLevel)
 
 	// info 将不会打印
@@ -452,9 +452,9 @@ func main() {
 			StacktraceKey:  "Stacktrace",
 			LineEnding:     zapcore.DefaultLineEnding,
 			EncodeLevel:    zapcore.CapitalLevelEncoder,
-			EncodeTime:     logging.TimeEncoder, // 使用logging的time格式
+			EncodeTime:     logging.TimeEncoder, // 使用 logging 的 time 格式
 			EncodeDuration: zapcore.SecondsDurationEncoder,
-			EncodeCaller:   logging.CallerEncoder, // 使用logging的caller格式
+			EncodeCaller:   logging.CallerEncoder, // 使用 logging 的 caller 格式
 		},
 		DisableCaller: false,
 	}
@@ -472,7 +472,7 @@ func main() {
 
 ## 日志保存到文件并自动 rotate
 
-使用 lumberjack 将日志保存到文件并 rotate ，采用 zap 的 RegisterSink 方法和 Config.OutputPaths 字段添加自定义的日志输出的方式来使用 lumberjack。
+使用 lumberjack 将日志保存到文件并 rotate ，采用 zap 的 RegisterSink 方法和 Config.OutputPaths 字段添加自定义的日志输出的方式来使用 lumberjack 。
 
 
 **示例**
@@ -484,9 +484,9 @@ import (
 	"github.com/axiaoxin-com/logging"
 )
 
-// Options 传入 LumberjacSink，并在 OutputPaths 中添加对应 scheme 就能将日志保存到文件并自动 rotate
+// Options 传入 LumberjacSink ，并在 OutputPaths 中添加对应 scheme 就能将日志保存到文件并自动 rotate
 func main() {
-	// scheme 为 lumberjack，日志文件为 /tmp/x.log , 保存 7 天，保留 10 份文件，文件大小超过 100M，使用压缩备份，压缩文件名使用 localtime
+	// scheme 为 lumberjack ，日志文件为 /tmp/x.log , 保存 7 天，保留 10 份文件，文件大小超过 100M ，使用压缩备份，压缩文件名使用 localtime
 	sink := logging.NewLumberjackSink("lumberjack", "/tmp/x.log", 7, 10, 100, true, true)
 	options := logging.Options{
 		LumberjackSink: sink,

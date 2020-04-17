@@ -4,13 +4,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// TraceIDFunc 生成trace id的回调函数类型
+// TraceIDFunc 生成 trace id 的回调函数类型
 type TraceIDFunc func(*gin.Context) string
 
 // GinTraceIDMiddleware is a gin middleware for gen a trace id in context
 func GinTraceIDMiddleware(traceIDFunc TraceIDFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 调用传入的回调方法获取traceid，不存在则新生成
+		// 调用传入的回调方法获取 traceid ，不存在则新生成
 		traceID := traceIDFunc(c)
 		if traceID == "" {
 			traceID = CtxTraceID(c)
@@ -24,17 +24,17 @@ func GinTraceIDMiddleware(traceIDFunc TraceIDFunc) gin.HandlerFunc {
 	}
 }
 
-// GetTraceIDFromHeader 从request header中获取key为TraceIDKey的值作为traceid
+// GetTraceIDFromHeader 从 request header 中获取 key 为 TraceIDKey 的值作为 traceid
 func GetTraceIDFromHeader(c *gin.Context) string {
 	return c.Request.Header.Get(TraceIDKey)
 }
 
-// GetTraceIDFromQueryString 从querystring中获取key为TraceIDKey的值作为traceid
+// GetTraceIDFromQueryString 从 querystring 中获取 key 为 TraceIDKey 的值作为 traceid
 func GetTraceIDFromQueryString(c *gin.Context) string {
 	return c.Query(TraceIDKey)
 }
 
-// GetTraceIDFromPostForm 从postform中获取key为TraceIDKey的值作为traceid
+// GetTraceIDFromPostForm 从 postform 中获取 key 为 TraceIDKey 的值作为 traceid
 func GetTraceIDFromPostForm(c *gin.Context) string {
 	return c.PostForm(TraceIDKey)
 }

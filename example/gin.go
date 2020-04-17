@@ -9,10 +9,10 @@ import (
 )
 
 func func1(c context.Context) {
-	// 使用CtxLogger打印带trace id的日志
+	// 使用 CtxLogger 打印带 trace id 的日志
 	logging.CtxLogger(c).Info("func1 begin")
 	func2(c)
-	// 使用logging全局方法打印带trace id的日志
+	// 使用 logging 全局方法打印带 trace id 的日志
 	logging.Info(c, "func1 end")
 }
 
@@ -29,8 +29,8 @@ func func3(c context.Context) {
 func main() {
 	r := gin.Default()
 
-	// 使用中间件注册获取trace id
-	// 使用默认的回调方法从Header中获取Key为traceID的值作为trace id
+	// 使用中间件注册获取 trace id
+	// 使用默认的回调方法从 Header 中获取 Key 为 traceID 的值作为 trace id
 	// 可以自定义方法
 	r.Use(logging.GinTraceIDMiddleware(logging.GetTraceIDFromHeader))
 
@@ -54,7 +54,7 @@ func main() {
 {"level":"INFO","time":"2020-04-15 19:16:55.739534","logger":"root.ctxLogger","msg":"func2 end","pid":34425,"traceID":"logging-bqbeq9ript38cuae9nb0"}
 {"level":"INFO","time":"2020-04-15 19:16:55.739540","logger":"root.ctxLogger","msg":"func1 end","pid":34425,"traceID":"logging-bqbeq9ript38cuae9nb0"}
 
-请求响应头中也包含 Trace ID, 请求时如果指定Header `-H "traceID: x-y-z"`，demo将使用该值作为trace id
+请求响应头中也包含 Trace ID, 请求时如果指定 Header `-H "traceID: x-y-z"`， demo 将使用该值作为 trace id
 
 curl
 curl localhost:8080/ping -v

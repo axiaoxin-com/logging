@@ -1,4 +1,4 @@
-// context中不能使用global中的方法打印日志，global会调用context的方法，会陷入循环
+// context 中不能使用 global 中的方法打印日志， global 会调用 context 的方法，会陷入循环
 
 package logging
 
