@@ -64,12 +64,12 @@ func TestCloneDefaultLogger(t *testing.T) {
 
 func TestSetLevel(t *testing.T) {
 	logger.Debug("TestChangeLevel raw debug level")
-	t.Log("current level:", defaultLevel.Level())
-	defaultLevel.SetLevel(zap.InfoLevel)
-	t.Log("new level:", defaultLevel.Level())
+	t.Log("current level:", defaultLoggerLevel.Level())
+	defaultLoggerLevel.SetLevel(zap.InfoLevel)
+	t.Log("new level:", defaultLoggerLevel.Level())
 	logger.Debug("TestChangeLevel raw debug level should not be logged")
 	// reset
-	defaultLevel.SetLevel(zap.DebugLevel)
+	defaultLoggerLevel.SetLevel(zap.DebugLevel)
 }
 
 func TestHTTPSetLevel(t *testing.T) {
