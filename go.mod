@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/getsentry/sentry-go v0.5.1
 	github.com/gin-gonic/gin v1.6.2
+	github.com/jinzhu/gorm v1.9.12
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rs/xid v1.2.1
