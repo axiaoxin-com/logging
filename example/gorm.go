@@ -53,7 +53,6 @@ func main() {
 }
 
 // log:
-// {"level":"DEBUG","time":"2020-04-20 17:27:55.915805","logger":"root.ctxLogger","msg":"Running AtomicLevel HTTP server on :1903","pid":79239}
 // {"level":"DEBUG","time":"2020-04-20 17:27:55.918425","logger":"root.gorm","msg":"CREATE TABLE \"products\" (\"id\" integer primary key autoincrement,\"created_at\" datetime,\"updated_at\" datetime,\"deleted_at\" datetime,\"code\" varchar(255),\"price\" integer )","pid":79239,"traceID":"logging-fake-trace-id","vars":null,"rowsAffected":0,"duration":0.001237568}
 // {"level":"DEBUG","time":"2020-04-20 17:27:55.919377","logger":"root.gorm","msg":"CREATE INDEX idx_products_deleted_at ON \"products\"(deleted_at) ","pid":79239,"traceID":"logging-fake-trace-id","vars":null,"rowsAffected":0,"duration":0.000748753}
 // {"level":"DEBUG","time":"2020-04-20 17:27:55.919790","logger":"root.gorm","msg":"INSERT INTO \"products\" (\"created_at\",\"updated_at\",\"deleted_at\",\"code\",\"price\") VALUES (?,?,?,?,?)","pid":79239,"traceID":"logging-fake-trace-id","vars":["2020-04-20T17:27:55.919448+08:00","2020-04-20T17:27:55.919448+08:00",null,"L1212",1000],"rowsAffected":1,"duration":0.000332846}

@@ -43,6 +43,7 @@ func TestNewLogger(t *testing.T) {
 		DisableCaller:     false,
 		DisableStacktrace: false,
 		SentryClient:      sc,
+		AtomicLevelAddr:   ":1903",
 	}
 	logger, err := NewLogger(options)
 	if err != nil {
@@ -50,31 +51,10 @@ func TestNewLogger(t *testing.T) {
 	}
 	logger.Debug("TestNewLogger Debug")
 	logger.Error("TestNewLogger Error")
-}
 
-func TestCloneDefaultLogger(t *testing.T) {
-	nlogger := CloneDefaultLogger("cloned")
-	if reflect.DeepEqual(nlogger, logger) {
-		t.Error("CloneDefaultLogger should not be default logger")
-	}
-	if &nlogger == &logger {
-		t.Error("CloneDefaultLogger should not be default logger")
-	}
-}
-
-func TestSetLevel(t *testing.T) {
-	logger.Debug("TestChangeLevel raw debug level")
-	t.Log("current level:", defaultLoggerLevel.Level())
-	defaultLoggerLevel.SetLevel(zap.InfoLevel)
-	t.Log("new level:", defaultLoggerLevel.Level())
-	logger.Debug("TestChangeLevel raw debug level should not be logged")
-	// reset
-	defaultLoggerLevel.SetLevel(zap.DebugLevel)
-}
-
-func TestHTTPSetLevel(t *testing.T) {
+	// TEST HTTP Level
 	// query level
-	url := "http://localhost" + defaultAtomicLevelAddr
+	url := "http://localhost:1903"
 	logger.Debug("TestChangeLevel raw debug level")
 	resp, err := http.Get(url)
 	if err != nil {
@@ -102,4 +82,25 @@ func TestHTTPSetLevel(t *testing.T) {
 	t.Log("current level:", string(content))
 
 	logger.Debug("TestChangeLevel raw debug level should not be logged")
+
+}
+
+func TestCloneDefaultLogger(t *testing.T) {
+	nlogger := CloneDefaultLogger("cloned")
+	if reflect.DeepEqual(nlogger, logger) {
+		t.Error("CloneDefaultLogger should not be default logger")
+	}
+	if &nlogger == &logger {
+		t.Error("CloneDefaultLogger should not be default logger")
+	}
+}
+
+func TestSetLevel(t *testing.T) {
+	logger.Debug("TestChangeLevel raw debug level")
+	t.Log("current level:", defaultLoggerLevel.Level())
+	defaultLoggerLevel.SetLevel(zap.InfoLevel)
+	t.Log("new level:", defaultLoggerLevel.Level())
+	logger.Debug("TestChangeLevel raw debug level should not be logged")
+	// reset
+	defaultLoggerLevel.SetLevel(zap.DebugLevel)
 }

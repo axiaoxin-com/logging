@@ -240,11 +240,6 @@ func DefaultInitialFields() map[string]interface{} {
 	return defaultInitialFields
 }
 
-// DefaultAtomicLevelAddr return defaultAtomicLevelAddr
-func DefaultAtomicLevelAddr() string {
-	return defaultAtomicLevelAddr
-}
-
 // ReplaceDefaultLogger 替换默认的全局 logger 为传入的新 logger
 // 返回函数，调用它可以恢复全局 logger 为上一次的 logger
 func ReplaceDefaultLogger(newLogger *zap.Logger) func() {
