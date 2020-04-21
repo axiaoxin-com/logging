@@ -52,9 +52,10 @@ func CtxGormLogger(c context.Context) GormLogger {
 	}
 }
 
-// SetGormLogger 为 gorm DB 设置 logger
-func SetGormLogger(c context.Context, db *gorm.DB) {
+// GormDBWithCtxLogger 为 gorm DB 设置 context 中的 logger ，返回带有新 logger 的 db 对象
+func GormDBWithCtxLogger(c context.Context, db *gorm.DB) *gorm.DB {
+	dbCopy := *db
 	logger := CtxGormLogger(c)
-	db.SetLogger(logger)
-	logger.logger.Debug("logging create and set GormLogger successful")
+	dbCopy.SetLogger(logger)
+	return &dbCopy
 }
