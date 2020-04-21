@@ -36,8 +36,7 @@ var (
 	// defaultLoggerName 默认 logger name 为 root
 	defaultLoggerName = "root"
 	// defaultLoggerLevel 默认 logger 日志级别默认为 debug
-	defaultLoggerLevel     = zap.NewAtomicLevelAt(zap.DebugLevel)
-	defaultAtomicLevelAddr = ":1903"
+	defaultLoggerLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
 	// defaultEncoderConfig 默认的日志字段名配置
 	defaultEncoderConfig = zapcore.EncoderConfig{
 		TimeKey:        "time",
@@ -112,7 +111,7 @@ func init() {
 		DisableCaller:     true,
 		DisableStacktrace: true,
 		SentryClient:      defaultSentryClient,
-		AtomicLevelAddr:   defaultAtomicLevelAddr,
+		AtomicLevelAddr:   "",
 		EncoderConfig:     defaultEncoderConfig,
 		LumberjackSink:    nil,
 	}
@@ -195,8 +194,8 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	}
 	if options.AtomicLevelAddr != "" {
 		go func() {
-			// curl -X GET localhost:1903
-			// curl -X PUT localhost:1903 -d '{"level":"info"}'
+			// curl -X GET http://host:port
+			// curl -X PUT http://host:port -d '{"level":"info"}'
 			Debug(nil, "Running AtomicLevel HTTP server on "+options.AtomicLevelAddr)
 			levelServer := http.NewServeMux()
 			levelServer.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
