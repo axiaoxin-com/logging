@@ -12,15 +12,19 @@ import (
 
 func main() {
 	/* Error sentry dsn env */
-	// 全局方法使用的默认 logger 在默认情况下不支持 sentry 上报，通过配置环境变量 LoggingSentryDSN 后自动支持
+	// 全局方法使用的默认 logger 在默认情况下不支持 sentry 上报，通过配置环境变量 SENTRY_DSN 后自动支持
 	logging.Error(nil, "dsn env")
+
 	// 如果环境变量配置了 sentry dsn ，则会创建一个默认 sentry client 并初始化 sentry ，可以通过 DefaultSentryClient 获取原始的 sentry client
 	if logging.DefaultSentryClient() != nil {
 		// 如果已经初始化过 sentry ，则可以使用 sentry hub 直接上报数据到 sentry
 		sentry.CaptureMessage("hello sentry hub msg!")
-		// waiting for report complete
-		time.Sleep(2 * time.Second)
+		sentry.Flush(2 * time.Second)
 	}
+
+	// 配置了 sentry 后，可以通过全局的方法上报 sentry
+	// 封装了上面包含 Flush 方法的示例写法
+	logging.SentryCaptureMessage("Hello sentry")
 
 	/* zap Debug */
 	logging.Debug(nil, "Debug message", zap.Int("intType", 123), zap.Bool("boolType", false), zap.Ints("sliceInt", []int{1, 2, 3}), zap.Reflect("map", map[string]interface{}{"i": 1, "s": "s"}))
