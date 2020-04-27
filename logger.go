@@ -81,9 +81,9 @@ type Options struct {
 
 const (
 	// SentryDSNEnvKey 引入包时默认创建 logger 将尝试从该环境变量名中获取 sentry dsn
-	SentryDSNEnvKey = "LoggingSentryDSN"
+	SentryDSNEnvKey = "SENTRY_DSN"
 	// SentryDebugEnvKey 尝试从该环境变量中获取 sentry 是否开启 debug 模式
-	SentryDebugEnvKey = "LoggingSentryDebug"
+	SentryDebugEnvKey = "SENTRY_DEBUG"
 )
 
 // init the global default logger
