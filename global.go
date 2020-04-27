@@ -5,7 +5,10 @@ package logging
 
 import (
 	"context"
+	"errors"
+	"time"
 
+	"github.com/getsentry/sentry-go"
 	"go.uber.org/zap"
 )
 
@@ -192,4 +195,24 @@ func ExtraField(keysAndValues ...interface{}) zap.Field {
 		i += 2
 	}
 	return zap.Reflect("extra", fieldMap)
+}
+
+// SentryCaptureMessage 上报 message 信息到 sentry
+func SentryCaptureMessage(msg string) error {
+	if DefaultSentryClient() == nil {
+		return errors.New("Sentry client is nil, please set the sentry dsn config")
+	}
+	defer sentry.Flush(2 * time.Second)
+	sentry.CaptureMessage(msg)
+	return nil
+}
+
+// SentryCaptureException 上报 error 信息到 sentry
+func SentryCaptureException(err error) error {
+	if DefaultSentryClient() == nil {
+		return errors.New("Sentry client is nil, please set the sentry dsn config")
+	}
+	defer sentry.Flush(2 * time.Second)
+	sentry.CaptureException(err)
+	return nil
 }
