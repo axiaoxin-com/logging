@@ -18,7 +18,7 @@ func GinTraceIDMiddleware(traceIDFunc TraceIDFunc) gin.HandlerFunc {
 		// 设置 trace id 到 header 中
 		c.Writer.Header().Set(TraceIDKey, traceID)
 		// 设置 trace id 和 ctxLogger 到 context 中
-		Context(c, CtxLogger(c), traceID)
+		Context(c, DefaultLogger(), traceID)
 
 		c.Next()
 	}
