@@ -26,7 +26,7 @@ logging 提供的开箱即用方法都是使用自身默认 logger 克隆出的 
 在 logging 被 import 时，会生成内部使用的默认 logger 。
 默认 logger 使用 JSON 格式打印日志内容到 stderr 。
 默认不带 Sentry 上报功能，可以通过设置环境变量或者替换 logger 方法支持。
-可通过 HTTP 调用 `curl -XPUT "http://localhost:1903" -d '{"level": "info"}'` 动态修改日志级别。
+默认 logger 可通过代码内部动态修改日志级别， 默认不支持 HTTP 方式动态修改日志级别，需要指定端口创建新的 logger 来支持。
 默认带有初始字段 pid 打印进程 ID 。
 
 开箱即用的方法第一个参数为 context.Context, 可以传入 gin.Context ，会尝试从其中获取 Trace ID 进行日志打印，无需 Trace ID 可以直接传 nil
