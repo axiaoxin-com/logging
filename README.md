@@ -31,7 +31,7 @@ logging 提供的开箱即用方法都是使用自身默认 logger 克隆出的 
 
 开箱即用的方法第一个参数为 context.Context, 可以传入 gin.Context ，会尝试从其中获取 Trace ID 进行日志打印，无需 Trace ID 可以直接传 nil
 
-**示例**
+**示例 [example/logging.go](https://github.com/axiaoxin-com/logging/blob/master/example/logging.go)**
 
 ```golang
 package main
@@ -99,7 +99,9 @@ func main() {
 
 1. 通过设置系统环境变量 `SENTRY_DSN` 和 `SENTRY_DEBUG` 来实现自动上报。
 
-2. 也可以通过替换默认 logger 来实现让全局方法支持 Error 以上级别自动上报，以下示例：
+2. 也可以通过替换默认 logger 来实现让全局方法支持 Error 以上级别自动上报。
+
+**示例 [example/replace.go](https://github.com/axiaoxin-com/logging/blob/master/example/replace.go)**
 
 ```golang
 // 默认的 logging 全局开箱即用的方法（如： logging.Debug , logging.Debugf 等）都是使用默认 logger 执行的，
@@ -151,7 +153,7 @@ func main() {
 
 logging 提供多种方式快速获取一个 logger 来打印日志
 
-**示例**：
+**示例 [example/logger.go](https://github.com/axiaoxin-com/logging/blob/master/example/logger.go)**
 
 ```golang
 package main
@@ -227,7 +229,7 @@ func main() {
 后续函数在内部打印日志时从 Context 中获取带有本次调用 trace id 的 logger 来打印日志几个进行调用链路跟踪。
 
 
-**示例 1**: 普通函数中打印打印带 Trace ID 的日志
+**示例 1 普通函数中打印打印带 Trace ID 的日志 [example/context.go](https://github.com/axiaoxin-com/logging/blob/master/example/context.go)**
 
 ```golang
 package main
@@ -259,7 +261,7 @@ func main() {
 }
 ```
 
-**示例 2**: gin 中打印带 Trace ID 的日志
+**示例 2 gin 中打印带 Trace ID 的日志 [example/gin.go](https://github.com/axiaoxin-com/logging/blob/master/example/gin.go)**:
 
 ```golang
 package main
@@ -342,10 +344,10 @@ pong* Closing connection 0
 ## 动态修改 logger 日志级别
 
 logging 可以在代码中对 AtomicLevel 调用 SetLevel 动态修改日志级别，也可以通过请求 HTTP 接口修改。
-默认 logger 使用 `:1903` 运行 HTTP 服务来接收请求修改日志级别。实际使用中日志级别通常写在配置文件中，
+创建 logger 时可自定义端口运行 HTTP 服务来接收请求修改日志级别。实际使用中日志级别通常写在配置文件中，
 可以通过监听配置文件的修改来动态调用 SetLevel 方法。
 
-**示例**:
+**示例 [example/atomiclevel.go](https://github.com/axiaoxin-com/logging/blob/master/example/atomiclevel.go)**
 
 ```golang
 package main
@@ -432,7 +434,7 @@ func main() {
 
 ## 自定义 logger Encoder 配置
 
-**示例**：
+**示例 [example/encoder.go](https://github.com/axiaoxin-com/logging/blob/master/example/encoder.go)**
 
 ```golang
 package main
@@ -480,7 +482,7 @@ func main() {
 使用 lumberjack 将日志保存到文件并 rotate ，采用 zap 的 RegisterSink 方法和 Config.OutputPaths 字段添加自定义的日志输出的方式来使用 lumberjack 。
 
 
-**示例**
+**示例 [example/lumberjack.go](https://github.com/axiaoxin-com/logging/blob/master/example/lumberjack.go)**
 
 ```golang
 package main
@@ -517,7 +519,7 @@ func main() {
 
 在每一次使用 gorm 进行 db 操作前，调用 GormDBWithCtxLogger 来设置替换 gorm DB 对象的默认 logger 并生成新的 DB 对象，之后使用新的 DB 对象来操作 gorm 即可。
 
-示例：
+**示例 [example/gorm.go](https://github.com/axiaoxin-com/logging/blob/master/example/gorm.go)**
 
 ```golang
 package main
