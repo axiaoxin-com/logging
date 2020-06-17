@@ -7,6 +7,7 @@ package logging
 
 import (
 	"context"
+	"sync"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -92,7 +93,10 @@ func CtxGormLogger(c context.Context, logWithLevel zapcore.Level) GormLogger {
 // GormDBWithCtxLogger 为 gorm DB 设置 context 中的 logger ，返回带有新 logger 的 db 对象
 func GormDBWithCtxLogger(c context.Context, db *gorm.DB, logWithLevel zapcore.Level) *gorm.DB {
 	dbCopy := *db
+	cdb := &dbCopy
+	// for fix assignment copies lock value. demo: https://play.golang.org/p/nGk5qRJ1MLY
+	cdb.RWMutex = sync.RWMutex{}
 	logger := CtxGormLogger(c, logWithLevel)
-	dbCopy.SetLogger(logger)
-	return &dbCopy
+	cdb.SetLogger(logger)
+	return cdb
 }
