@@ -40,15 +40,17 @@ func (g GormLogger) Print(values ...interface{}) {
 
 // NewGormLogger 返回带 zap logger 的 GormLogger
 func NewGormLogger(logger *zap.Logger) GormLogger {
+	logger = logger.Named(GormLoggerName).WithOptions(zap.AddCallerSkip(7))
 	return GormLogger{
-		logger: logger.Named(GormLoggerName),
+		logger: logger,
 	}
 }
 
 // CtxGormLogger 从 context 中获取 zap logger 来创建 GormLogger
 func CtxGormLogger(c context.Context) GormLogger {
+	logger := CtxLogger(c).Named(GormLoggerName).WithOptions(zap.AddCallerSkip(7))
 	return GormLogger{
-		logger: CtxLogger(c).Named(GormLoggerName),
+		logger: logger,
 	}
 }
 

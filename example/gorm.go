@@ -8,6 +8,7 @@ import (
 	"github.com/axiaoxin-com/logging"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"go.uber.org/zap"
 )
 
 // Product test model
@@ -41,7 +42,7 @@ func init() {
 func G(traceID string) {
 
 	// Mock a context with a trace id and logger
-	ctx := logging.Context(context.Background(), logging.DefaultLogger(), traceID)
+	ctx := logging.Context(context.Background(), logging.DefaultLogger().WithOptions(zap.AddCaller()), traceID)
 
 	// 打印带 trace id 的 gorm 日志
 	// 必须先对 db 对象设置带有 trace id 的 ctxlogger 作为 sql 日志打印的 logger
