@@ -57,6 +57,9 @@ func CtxLogger(c context.Context, fields ...zap.Field) *zap.Logger {
 
 // CtxTraceID get trace id from context
 func CtxTraceID(c context.Context) string {
+	if c == nil {
+		c = context.Background()
+	}
 	// first get from gin context
 	if gc, ok := c.(*gin.Context); ok {
 		if traceID := gc.GetString(TraceIDKey); traceID != "" {
@@ -74,6 +77,9 @@ func CtxTraceID(c context.Context) string {
 
 // Context set trace id and logger into context.Context and gin.Context
 func Context(c context.Context, logger *zap.Logger, traceID string) context.Context {
+	if c == nil {
+		c = context.Background()
+	}
 	if gc, ok := c.(*gin.Context); ok {
 		// set ctxlogger in gin.Context
 		gc.Set(CtxLoggerName, logger)
