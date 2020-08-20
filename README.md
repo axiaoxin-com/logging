@@ -1,5 +1,7 @@
 # logging
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3f0bf6abb7504f2f8734f094bb65e0d6)](https://app.codacy.com/gh/axiaoxin-com/logging?utm_source=github.com&utm_medium=referral&utm_content=axiaoxin-com/logging&utm_campaign=Badge_Grade_Settings)
+
 logging 简单封装了在日常使用 [zap](https://github.com/uber-go/zap) 打日志时的常用方法。
 
 - 提供快速使用 zap 打印日志的方法，除 zap 的 DPanic 、 DPanicf 方法外所有日志打印方法开箱即用
