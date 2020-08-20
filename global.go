@@ -189,8 +189,8 @@ func ExtraField(keysAndValues ...interface{}) zap.Field {
 	fieldMap := map[string]interface{}{}
 	for i := 0; i < len(keysAndValues); {
 		k, v := keysAndValues[i], keysAndValues[i+1]
-		if kStr, ok := k.(string); ok {
-			fieldMap[kStr] = v
+		if kstr, ok := k.(string); ok {
+			fieldMap[kstr] = v
 		}
 		i += 2
 	}

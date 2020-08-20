@@ -228,7 +228,6 @@ func main() {
 每一次函数或者 gin 的 http 接口调用，在最顶层入口处都将一个带有唯一 trace id 的 logger 放入 context.Context 或 gin.Context ，
 后续函数在内部打印日志时从 Context 中获取带有本次调用 trace id 的 logger 来打印日志几个进行调用链路跟踪。
 
-
 **示例 1 普通函数中打印打印带 Trace ID 的日志 [example/context.go](https://github.com/axiaoxin-com/logging/blob/master/example/context.go)**
 
 ```golang
@@ -481,11 +480,9 @@ func main() {
 }
 ```
 
-
 ## 日志保存到文件并自动 rotate
 
 使用 lumberjack 将日志保存到文件并 rotate ，采用 zap 的 RegisterSink 方法和 Config.OutputPaths 字段添加自定义的日志输出的方式来使用 lumberjack 。
-
 
 **示例 [example/lumberjack.go](https://github.com/axiaoxin-com/logging/blob/master/example/lumberjack.go)**
 
@@ -520,7 +517,6 @@ func main() {
 ```
 
 ## 支持 Gorm 日志打印 Trace ID
-
 
 在每一次使用 gorm 进行 db 操作前，调用 GormDBWithCtxLogger 来设置替换 gorm DB 对象的默认 logger 并生成新的 DB 对象，之后使用新的 DB 对象来操作 gorm 即可。
 

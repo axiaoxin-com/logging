@@ -94,15 +94,12 @@ func TestCtxLoggerDefaultLogger(t *testing.T) {
 }
 
 func TestGinCtxLoggerDefaultLoggerWithField(t *testing.T) {
-	c := &gin.Context{}
+	ginctx := &gin.Context{}
 
-	Context(c, CtxLogger(c), "rid")
-	ctxlogger := CtxLogger(c, zap.String("myfield", "xxx"))
-	if ctxlogger == nil {
-		t.Fatal("context also must should return a logger")
-	}
-	if ctxlogger == logger {
-		t.Fatal("with field will get a logger")
+	Context(ginctx, CtxLogger(ginctx), "rid")
+	ginCtxlogger := CtxLogger(ginctx, zap.String("myfield", "xxx"))
+	if ginCtxlogger == nil {
+		t.Fatal("gin context logger is nil")
 	}
 	logger.Info("this is a logger from default logger with field")
 }
@@ -110,13 +107,10 @@ func TestGinCtxLoggerDefaultLoggerWithField(t *testing.T) {
 func TestCtxLoggerDefaultLoggerWithField(t *testing.T) {
 	c := context.Background()
 
-	Context(c, CtxLogger(c), "rid")
-	ctxlogger := CtxLogger(c, zap.String("myfield", "xxx"))
+	Context(c, CtxLogger(c), "rid-xx")
+	ctxlogger := CtxLogger(c, zap.String("field", "xx"))
 	if ctxlogger == nil {
-		t.Fatal("context also must should return a logger")
-	}
-	if ctxlogger == logger {
-		t.Fatal("with field will get a logger")
+		t.Fatal("context logger is nil")
 	}
 	logger.Info("this is a logger from default logger with field")
 }
