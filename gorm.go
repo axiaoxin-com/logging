@@ -49,7 +49,7 @@ func (g GormLogger) Print(values ...interface{}) {
 		}
 		logWith(values[3].(string),
 			zap.Any("vars", values[4]),
-			zap.Int64("rowsAffected", values[5].(int64)),
+			zap.Int64("affected", values[5].(int64)),
 			zap.Float64("duration", values[2].(time.Duration).Seconds()),
 		)
 	} else {
