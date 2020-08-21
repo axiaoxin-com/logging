@@ -13,16 +13,13 @@ import (
 // Ctxkey context key 类型
 type Ctxkey string
 
-const (
+var (
 	// CtxLoggerName define the ctx logger name
-	CtxLoggerName = "ctxLogger"
-	// TraceIDKey define the trace id keyname
-	TraceIDKey = "traceID"
-
-	// CtxkeyCtxLoggerName context keyname
-	CtxkeyCtxLoggerName Ctxkey = CtxLoggerName
-	// CtxkeyTraceID context keyname
-	CtxkeyTraceID Ctxkey = TraceIDKey
+	CtxLoggerName Ctxkey = "ctxlogger"
+	// TraceIDKeyname define the trace id keyname
+	TraceIDKeyname Ctxkey = "traceid"
+	// TraceIDPrefix set the prefix when gen a trace id
+	TraceIDPrefix string = "logging-"
 )
 
 // CtxLogger get the ctxLogger in context
@@ -33,21 +30,21 @@ func CtxLogger(c context.Context, fields ...zap.Field) *zap.Logger {
 	var ctxLogger *zap.Logger
 	var ctxLoggerItf interface{}
 	if gc, ok := c.(*gin.Context); ok {
-		ctxLoggerItf, _ = gc.Get(CtxLoggerName)
+		ctxLoggerItf, _ = gc.Get(string(CtxLoggerName))
 	} else {
-		ctxLoggerItf = c.Value(CtxkeyCtxLoggerName)
+		ctxLoggerItf = c.Value(CtxLoggerName)
 	}
 
 	if ctxLoggerItf != nil {
 		ctxLogger = ctxLoggerItf.(*zap.Logger)
 	} else {
-		ctxLogger = CloneDefaultLogger(CtxLoggerName)
+		ctxLogger = CloneDefaultLogger(string(CtxLoggerName))
 	}
 
 	// try to get trace id from ctx
 	traceID := CtxTraceID(c)
 	// then set trace id into ctxlogger
-	ctxLogger = ctxLogger.With(zap.String(TraceIDKey, traceID))
+	ctxLogger = ctxLogger.With(zap.String(string(TraceIDKeyname), traceID))
 
 	if len(fields) > 0 {
 		ctxLogger = ctxLogger.With(fields...)
@@ -62,17 +59,17 @@ func CtxTraceID(c context.Context) string {
 	}
 	// first get from gin context
 	if gc, ok := c.(*gin.Context); ok {
-		if traceID := gc.GetString(TraceIDKey); traceID != "" {
+		if traceID := gc.GetString(string(TraceIDKeyname)); traceID != "" {
 			return traceID
 		}
 	}
 	// get from go context
-	traceIDItf := c.Value(CtxkeyTraceID)
+	traceIDItf := c.Value(TraceIDKeyname)
 	if traceIDItf != nil {
 		return traceIDItf.(string)
 	}
 	// return default value
-	return "logging-" + xid.New().String()
+	return TraceIDPrefix + xid.New().String()
 }
 
 // Context set trace id and logger into context.Context and gin.Context
@@ -82,13 +79,13 @@ func Context(c context.Context, logger *zap.Logger, traceID string) context.Cont
 	}
 	if gc, ok := c.(*gin.Context); ok {
 		// set ctxlogger in gin.Context
-		gc.Set(CtxLoggerName, logger)
+		gc.Set(string(CtxLoggerName), logger)
 		// set traceID in gin.Context
-		gc.Set(TraceIDKey, traceID)
+		gc.Set(string(TraceIDKeyname), traceID)
 	}
 	// set ctxlogger in context.Context
-	c = context.WithValue(c, CtxkeyCtxLoggerName, logger)
+	c = context.WithValue(c, CtxLoggerName, logger)
 	// set traceID in context.Context
-	c = context.WithValue(c, CtxkeyTraceID, traceID)
+	c = context.WithValue(c, TraceIDKeyname, traceID)
 	return c
 }

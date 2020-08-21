@@ -16,7 +16,7 @@ func GinTraceIDMiddleware(traceIDFunc TraceIDFunc) gin.HandlerFunc {
 			traceID = CtxTraceID(c)
 		}
 		// 设置 trace id 到 header 中
-		c.Writer.Header().Set(TraceIDKey, traceID)
+		c.Writer.Header().Set(string(TraceIDKeyname), traceID)
 		// 设置 trace id 和 ctxLogger 到 context 中
 		Context(c, DefaultLogger(), traceID)
 
@@ -24,17 +24,17 @@ func GinTraceIDMiddleware(traceIDFunc TraceIDFunc) gin.HandlerFunc {
 	}
 }
 
-// GetTraceIDFromHeader 从 request header 中获取 key 为 TraceIDKey 的值作为 traceid
+// GetTraceIDFromHeader 从 request header 中获取 key 为 TraceIDKeyname 的值作为 traceid
 func GetTraceIDFromHeader(c *gin.Context) string {
-	return c.Request.Header.Get(TraceIDKey)
+	return c.Request.Header.Get(string(TraceIDKeyname))
 }
 
-// GetTraceIDFromQueryString 从 querystring 中获取 key 为 TraceIDKey 的值作为 traceid
+// GetTraceIDFromQueryString 从 querystring 中获取 key 为 TraceIDKeyname 的值作为 traceid
 func GetTraceIDFromQueryString(c *gin.Context) string {
-	return c.Query(TraceIDKey)
+	return c.Query(string(TraceIDKeyname))
 }
 
-// GetTraceIDFromPostForm 从 postform 中获取 key 为 TraceIDKey 的值作为 traceid
+// GetTraceIDFromPostForm 从 postform 中获取 key 为 TraceIDKeyname 的值作为 traceid
 func GetTraceIDFromPostForm(c *gin.Context) string {
-	return c.PostForm(TraceIDKey)
+	return c.PostForm(string(TraceIDKeyname))
 }

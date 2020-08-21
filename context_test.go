@@ -13,7 +13,7 @@ import (
 func TestGinContext(t *testing.T) {
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	Context(c, DefaultLogger(), "1234")
-	_, exists := c.Get(CtxLoggerName)
+	_, exists := c.Get(string(CtxLoggerName))
 	if !exists {
 		t.Fatal("set ctxLogger failed")
 	}
@@ -121,7 +121,7 @@ func TestGinCtxTraceID(t *testing.T) {
 	if CtxTraceID(c) == "" {
 		t.Fatal("context should return default value")
 	}
-	c.Set(TraceIDKey, "IAMAREQUESTID")
+	c.Set(string(TraceIDKeyname), "IAMAREQUESTID")
 	if CtxTraceID(c) != "IAMAREQUESTID" {
 		t.Fatal("context should return set value")
 	}
@@ -132,7 +132,7 @@ func TestCtxTraceID(t *testing.T) {
 	if CtxTraceID(c) == "" {
 		t.Fatal("context should return default value")
 	}
-	c = context.WithValue(c, CtxkeyTraceID, "IAMAREQUESTID")
+	c = context.WithValue(c, TraceIDKeyname, "IAMAREQUESTID")
 	if CtxTraceID(c) != "IAMAREQUESTID" {
 		t.Fatal("context should return set value")
 	}
