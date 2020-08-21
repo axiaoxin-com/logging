@@ -84,6 +84,8 @@ const (
 	SentryDSNEnvKey = "SENTRY_DSN"
 	// SentryDebugEnvKey 尝试从该环境变量中获取 sentry 是否开启 debug 模式
 	SentryDebugEnvKey = "SENTRY_DEBUG"
+	// AtomicLevelAddrEnvKey 初始化时尝试获取该环境变量用于设置动态修改日志级别的 http 服务运行地址
+	AtomicLevelAddrEnvKey = "ATOMIC_LEVEL_ADDR"
 )
 
 // init the global default logger
@@ -108,10 +110,10 @@ func init() {
 		Format:            "json",
 		OutputPaths:       defaultOutPaths,
 		InitialFields:     defaultInitialFields,
-		DisableCaller:     true,
+		DisableCaller:     false,
 		DisableStacktrace: true,
 		SentryClient:      defaultSentryClient,
-		AtomicLevelAddr:   "",
+		AtomicLevelAddr:   os.Getenv(AtomicLevelAddrEnvKey),
 		EncoderConfig:     defaultEncoderConfig,
 		LumberjackSink:    nil,
 	}
