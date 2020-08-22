@@ -3,6 +3,8 @@
 package logging
 
 import (
+	"fmt"
+	"syscall"
 	"time"
 
 	"github.com/getsentry/sentry-go"
@@ -184,7 +186,10 @@ func NewSentryClientByDSN(dsn string, debug bool) (*sentry.Client, error) {
 func SentryAttach(l *zap.Logger, sentryClient *sentry.Client) *zap.Logger {
 	cfg := SentryCoreConfig{
 		Level: zap.ErrorLevel,
-		Tags:  map[string]string{},
+		Tags: map[string]string{
+			"pid":       fmt.Sprint(syscall.Getpid()),
+			"server_ip": ServerIP(),
+		},
 	}
 	core := NewSentryCore(cfg, sentryClient)
 	return AttachCore(l, core)

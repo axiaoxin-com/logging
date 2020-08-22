@@ -11,6 +11,7 @@ package logging
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"reflect"
@@ -31,7 +32,8 @@ var (
 	defaultOutPaths = []string{"stderr"}
 	// defaultInitialFields 默认初始字段为进程 id
 	defaultInitialFields = map[string]interface{}{
-		"pid": syscall.Getpid(),
+		"pid":       syscall.Getpid(),
+		"server_ip": ServerIP(),
 	}
 	// defaultLoggerName 默认 logger name 为 root
 	defaultLoggerName = "root"
@@ -75,7 +77,7 @@ type Options struct {
 	DisableStacktrace bool                   // 是否关闭打印 stackstrace
 	SentryClient      *sentry.Client         // sentry 客户端
 	AtomicLevelAddr   string                 // http 动态修改日志级别的地址，传空不启用
-	EncoderConfig     zapcore.EncoderConfig  // 配置日志地点 key 的名称
+	EncoderConfig     zapcore.EncoderConfig  // 配置日志字段 key 的名称
 	LumberjackSink    *LumberjackSink        // lumberjack sink 支持日志文件 rotate
 }
 
@@ -262,4 +264,17 @@ func DefaultLoggerLevel() zap.AtomicLevel {
 // DefaultSentryClient 返回默认 sentry client
 func DefaultSentryClient() *sentry.Client {
 	return defaultSentryClient
+}
+
+// ServerIP 获取当前 IP
+func ServerIP() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return ""
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+
+	return localAddr.IP.String()
 }
