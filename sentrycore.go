@@ -154,8 +154,8 @@ func NewSentryCore(cfg SentryCoreConfig, sentryClient *sentry.Client) zapcore.Co
 	return &core
 }
 
-// GetSentryClientByDSN return sentry client by sentrydsn
-func GetSentryClientByDSN(dsn string, debug bool) (*sentry.Client, error) {
+// NewSentryClientByDSN return sentry client by sentrydsn
+func NewSentryClientByDSN(dsn string, debug bool) (*sentry.Client, error) {
 	options := sentry.ClientOptions{
 		Dsn:              dsn,
 		Debug:            debug,
