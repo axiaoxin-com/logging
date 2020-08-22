@@ -15,11 +15,11 @@ type Ctxkey string
 
 var (
 	// CtxLoggerName define the ctx logger name
-	CtxLoggerName Ctxkey = "ctxlogger"
+	CtxLoggerName Ctxkey = "ctx_logger"
 	// TraceIDKeyname define the trace id keyname
-	TraceIDKeyname Ctxkey = "traceid"
+	TraceIDKeyname Ctxkey = "trace_id"
 	// TraceIDPrefix set the prefix when gen a trace id
-	TraceIDPrefix string = "logging-"
+	TraceIDPrefix string = "logging_"
 )
 
 // CtxLogger get the ctxLogger in context
