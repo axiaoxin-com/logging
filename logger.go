@@ -147,11 +147,13 @@ func NewLogger(options Options) (*zap.Logger, error) {
 		cfg.ErrorOutputPaths = options.OutputPaths
 	}
 	// 设置 InitialFields 没有传参使用默认字段
-	if len(options.InitialFields) == 0 {
-		cfg.InitialFields = defaultInitialFields
-	} else {
-		cfg.InitialFields = options.InitialFields
+	// 传了就添加到现有的初始化字段中
+	if len(options.InitialFields) > 0 {
+		for k, v := range options.InitialFields {
+			defaultInitialFields[k] = v
+		}
 	}
+	cfg.InitialFields = defaultInitialFields
 	// 设置 disablecaller
 	cfg.DisableCaller = options.DisableCaller
 	// 设置 disablestacktrace
