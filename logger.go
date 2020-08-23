@@ -29,7 +29,7 @@ var (
 	// 默认 sentry client
 	defaultSentryClient *sentry.Client
 	// defaultOutPaths zap 日志默认输出位置
-	defaultOutPaths = []string{"stderr"}
+	defaultOutPaths = []string{"stdout"}
 	// defaultInitialFields 默认初始字段为进程 id
 	defaultInitialFields = map[string]interface{}{
 		"pid":       syscall.Getpid(),
