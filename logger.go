@@ -100,7 +100,7 @@ func init() {
 		if strings.ToLower(debugStr) != "" {
 			debug = true
 		}
-		defaultSentryClient, err = NewSentryClientByDSN(dsn, debug)
+		defaultSentryClient, err = NewSentryClient(dsn, debug)
 		if err != nil {
 			log.Println(err)
 		}

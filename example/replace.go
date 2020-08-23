@@ -17,7 +17,7 @@ func main() {
 	// {"level":"ERROR","time":"2020-04-15 20:09:23.661457","logger":"root.ctxLogger","msg":"default logger no sentry and file","pid":73847}
 
 	// 创建一个支持 sentry 和 lumberjack 的 logger
-	sentryClient, _ := logging.NewSentryClientByDSN(os.Getenv("dsn"), true)
+	sentryClient, _ := logging.NewSentryClient(os.Getenv("dsn"), true)
 	options := logging.Options{
 		Name:           "replacedLogger",
 		OutputPaths:    []string{"stderr", "lumberjack:"},

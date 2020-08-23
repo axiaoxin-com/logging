@@ -9,7 +9,7 @@ import (
 
 func main() {
 	debug := true
-	sentryClient, _ := logging.NewSentryClientByDSN(os.Getenv("dsn"), debug)
+	sentryClient, _ := logging.NewSentryClient(os.Getenv("dsn"), debug)
 	logger := logging.DefaultLogger()
 	logger = logging.SentryAttach(logger, sentryClient)
 	logger.Error("hello sentry!")

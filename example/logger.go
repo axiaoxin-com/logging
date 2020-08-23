@@ -18,7 +18,7 @@ func main() {
 	/* 为默认 logger 设置 sentry core */
 	// logging 内部默认的 logger 不支持 sentry 上报，可以通过以下方法设置 sentry
 	// 创建 sentry 客户端
-	sentryClient, _ := logging.NewSentryClientByDSN("YOUR_SENTRY_DSN", false)
+	sentryClient, _ := logging.NewSentryClient("YOUR_SENTRY_DSN", false)
 	// 设置 sentry ，使用该 logger 打印 Error 及其以上级别的日志事件将会自动上报到 Sentry
 	defaultLogger = logging.SentryAttach(defaultLogger, sentryClient)
 

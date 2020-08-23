@@ -126,7 +126,7 @@ func main() {
 	// {"level":"ERROR","time":"2020-04-15 20:09:23.661457","logger":"root.ctxLogger","msg":"default logger no sentry and file","pid":73847}
 
 	// 创建一个支持 sentry 和 lumberjack 的 logger
-	sentryClient, _ := logging.NewSentryClientByDSN(os.Getenv("dsn"), true)
+	sentryClient, _ := logging.NewSentryClient(os.Getenv("dsn"), true)
 	options := logging.Options{
 		Name:           "replacedLogger",
 		OutputPaths:    []string{"stderr", "lumberjack:"},
@@ -179,7 +179,7 @@ func main() {
 	/* 为默认 logger 设置 sentry core */
 	// logging 内部默认的 logger 不支持 sentry 上报，可以通过以下方法设置 sentry
 	// 创建 sentry 客户端
-	sentryClient, _ := logging.NewSentryClientByDSN("YOUR_SENTRY_DSN", false)
+	sentryClient, _ := logging.NewSentryClient("YOUR_SENTRY_DSN", false)
 	// 设置 sentry ，使用该 logger 打印 Error 及其以上级别的日志事件将会自动上报到 Sentry
 	defaultLogger = logging.SentryAttach(defaultLogger, sentryClient)
 

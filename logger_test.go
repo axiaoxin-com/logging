@@ -29,9 +29,9 @@ func TestNewLoggerNoParam(t *testing.T) {
 
 func TestNewLogger(t *testing.T) {
 	dsn := "sentrydsn"
-	sc, err := NewSentryClientByDSN(dsn, true)
+	sc, err := NewSentryClient(dsn, true)
 	if err != nil {
-		// t.Error("TestNewLogger NewSentryClientByDSN err", err)
+		// t.Error("TestNewLogger NewSentryClient err", err)
 	}
 	level := zap.NewAtomicLevelAt(zap.DebugLevel)
 	options := Options{
