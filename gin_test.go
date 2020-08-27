@@ -13,10 +13,8 @@ func hello(c *gin.Context) {
 }
 
 func TestGinLogger(t *testing.T) {
-	logger := GinLogger()
-
 	app := gin.New()
-	app.Use(logger)
+	app.Use(GinLogger())
 	app.GET("/hello", hello)
 	go app.Run()
 	time.Sleep(100 * time.Millisecond)

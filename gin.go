@@ -117,11 +117,11 @@ func defaultGinTraceIDFunc(c *gin.Context) (traceID string) {
 		return
 	}
 	traceID = GetGinTraceIDFromPostForm(c)
-	if traceID == "" {
+	if traceID != "" {
 		return
 	}
 	traceID = GetGinTraceIDFromQueryString(c)
-	if traceID == "" {
+	if traceID != "" {
 		return
 	}
 	traceID = CtxTraceID(c)
@@ -154,9 +154,8 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 		c.Request.Header.Set(string(TraceIDKeyname), traceID)
 		c.Writer.Header().Set(string(TraceIDKeyname), traceID)
 		// 设置 trace id 和 ctxLogger 到 context 中
-		Context(c, DefaultLogger(), traceID)
+		Context(c, CloneDefaultLogger("access_logger"), traceID)
 
-		logger := CtxLogger(c).Named("access_logger")
 		start := time.Now()
 
 		// 获取请求信息
@@ -193,9 +192,10 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			msg.Timestamp = time.Now()
 			msg.Latency = msg.Timestamp.Sub(start).Seconds()
 
+			accessLogger := CtxLogger(c)
 			// 判断是否不打印 details 字段
 			if !conf.DisableDetails {
-				logger = logger.With(zap.Any("details", msg))
+				accessLogger = accessLogger.With(zap.Any("details", msg))
 			}
 			// 判断是否打印请求、响应 body
 			if conf.LogBody {
@@ -214,12 +214,12 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 				msg.ResponseBody = rbw.body.String()
 			}
 			// 打印访问日志，根据状态码确定日志打印级别
-			log := logger.Info
+			log := accessLogger.Info
 			msg.ContextErrors = c.Errors.String() // handler 中使用 c.Error(err) 后，会出现在这里
 			if msg.ContextErrors != "" || msg.StatusCode >= http.StatusInternalServerError {
-				log = logger.Error
+				log = accessLogger.Error
 			} else if msg.StatusCode >= http.StatusBadRequest {
-				log = logger.Warn
+				log = accessLogger.Warn
 			}
 			log(formatter(msg))
 		}
