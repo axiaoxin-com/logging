@@ -153,8 +153,10 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 		traceID := getTraceID(c)
 		// 设置 trace id 到 request header 中
 		c.Request.Header.Set(string(TraceIDKeyname), traceID)
+		// 设置 trace id 到 response header 中
+		c.Writer.Header().Set(string(TraceIDKeyname), traceID)
 		// 设置 trace id 和 ctxLogger 到 context 中
-		Context(c, CloneDefaultLogger("access_logger"), traceID)
+		Context(c, CloneDefaultLogger("gin"), traceID)
 
 		start := time.Now()
 
@@ -184,9 +186,6 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 
 		c.Next()
 
-		// 设置 trace id 到 response header 中
-		c.Writer.Header().Set(string(TraceIDKeyname), traceID)
-
 		if _, exists := skip[msg.Path]; !exists {
 			// 获取响应信息
 			msg.StatusCode = c.Writer.Status()
@@ -214,7 +213,7 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			msg.ContextErrors = c.Errors.String() // handler 中使用 c.Error(err) 后，会出现在这里
 
 			// msg 设置完毕 创建 logger 进行打印
-			accessLogger := CtxLogger(c)
+			accessLogger := CtxLogger(c).Named("access_logger")
 			// 判断是否不打印 details 字段
 			if !conf.DisableDetails {
 				accessLogger = accessLogger.With(zap.Any("details", msg))

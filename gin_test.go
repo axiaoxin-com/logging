@@ -12,6 +12,7 @@ import (
 
 func hello(c *gin.Context) {
 	c.JSON(200, "world")
+	panic("xx")
 }
 
 func TestGinLogger(t *testing.T) {
