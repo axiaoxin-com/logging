@@ -25,7 +25,7 @@ func main() {
 	logger, _ := logging.NewLogger(options)
 	logger.Debug("Debug level msg", zap.Any("current level", level.Level()))
 	// Output:
-	// {"level":"DEBUG","time":"2020-04-15 18:03:17.799767","logger":"root","caller":"example/atomiclevel.go:main:26","msg":"Debug level msg","pid":6088,"current level":"debug"}
+	// {"level":"DEBUG","time":"2020-04-15 18:03:17.799767","logger":"logging","caller":"example/atomiclevel.go:main:26","msg":"Debug level msg","pid":6088,"current level":"debug"}
 
 	// 使用 SetLevel 动态修改 logger 日志级别为 error
 	// 实际应用中可以监听配置文件中日志级别配置项的变化动态调用该函数
@@ -35,7 +35,7 @@ func main() {
 	// 只会打印 error 以上
 	logger.Error("Error level msg", zap.Any("current level", level.Level()))
 	// Output:
-	// {"level":"ERROR","time":"2020-04-15 18:03:17.799999","logger":"root","caller":"example/atomiclevel.go:main:34","msg":"Error level msg","pid":6088,"current level":"error","stacktrace":"main.main\n\t/Users/ashin/go/src/logging/example/atomiclevel.go:34\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
+	// {"level":"ERROR","time":"2020-04-15 18:03:17.799999","logger":"logging","caller":"example/atomiclevel.go:main:34","msg":"Error level msg","pid":6088,"current level":"error","stacktrace":"main.main\n\t/Users/ashin/go/src/logging/example/atomiclevel.go:34\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
 
 	// 通过 HTTP 方式动态修改当前的 error level 为 debug level
 	// 查询当前 level
@@ -59,12 +59,12 @@ func main() {
 
 	logger.Debug("level is changed on fly!")
 	// Output:
-	// {"level":"DEBUG","time":"2020-04-15 18:03:17.805293","logger":"root","caller":"example/atomiclevel.go:main:57","msg":"level is changed on fly!","pid":6088}
+	// {"level":"DEBUG","time":"2020-04-15 18:03:17.805293","logger":"logging","caller":"example/atomiclevel.go:main:57","msg":"level is changed on fly!","pid":6088}
 
 	/* 修改默认 logger 日志级别 */
 	logging.Info(nil, "default logger level")
 	// 修改前 Output:
-	// {"level":"INFO","time":"2020-04-16 13:33:50.178265","logger":"root.ctxLogger","msg":"default logger level","pid":45311}
+	// {"level":"INFO","time":"2020-04-16 13:33:50.178265","logger":"logging.ctx_logger","msg":"default logger level","pid":45311}
 
 	// 获取默认 logger 的 level
 	defaultLoggerLevel := logging.DefaultLoggerLevel()
@@ -75,6 +75,6 @@ func main() {
 	logging.Info(nil, "info level will not be print")
 	logging.Error(nil, "new level")
 	// Output:
-	// {"level":"ERROR","time":"2020-04-16 13:33:50.178273","logger":"root.ctxLogger","msg":"new level","pid":45311}
+	// {"level":"ERROR","time":"2020-04-16 13:33:50.178273","logger":"logging.ctx_logger","msg":"new level","pid":45311}
 
 }

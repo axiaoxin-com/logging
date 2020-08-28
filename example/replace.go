@@ -14,7 +14,7 @@ func main() {
 	// 默认使用全局方法不会保存到文件和上报 Sentry
 	logging.Error(nil, "default logger no sentry and file")
 	// Output:
-	// {"level":"ERROR","time":"2020-04-15 20:09:23.661457","logger":"root.ctxLogger","msg":"default logger no sentry and file","pid":73847}
+	// {"level":"ERROR","time":"2020-04-15 20:09:23.661457","logger":"logging.ctx_logger","msg":"default logger no sentry and file","pid":73847}
 
 	// 创建一个支持 sentry 和 lumberjack 的 logger
 	sentryClient, _ := logging.NewSentryClient(os.Getenv("dsn"), true)
@@ -31,7 +31,7 @@ func main() {
 	// 全局方法将使用新的 logger，上报 sentry 并输出到文件
 	logging.Error(nil, "ReplaceDefaultLogger")
 	// Output并保存到文件:
-	// {"level":"ERROR","time":"2020-04-15 20:09:23.661927","logger":"replacedLogger.ctxLogger","caller":"logging/global.go:Error:166","msg":"ReplaceDefaultLogger","pid":73847,"stacktrace":"github.com/axiaoxin-com/logging.Error\n\t/Users/ashin/go/src/logging/global.go:166\nmain.main\n\t/Users/ashin/go/src/logging/example/replace.go:30\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
+	// {"level":"ERROR","time":"2020-04-15 20:09:23.661927","logger":"replacedLogger.ctx_logger","caller":"logging/global.go:Error:166","msg":"ReplaceDefaultLogger","pid":73847,"stacktrace":"github.com/axiaoxin-com/logging.Error\n\t/Users/ashin/go/src/logging/global.go:166\nmain.main\n\t/Users/ashin/go/src/logging/example/replace.go:30\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
 
 	// 重置默认 logger
 	resetLogger()
@@ -39,5 +39,5 @@ func main() {
 	// 全局方法将恢复使用原始的 logger，不再上报 sentry 和输出到文件
 	logging.Error(nil, "ResetDefaultLogger")
 	// Output:
-	// {"level":"ERROR","time":"2020-04-15 20:09:23.742995","logger":"root.ctxLogger","msg":"ResetDefaultLogger","pid":73847}
+	// {"level":"ERROR","time":"2020-04-15 20:09:23.742995","logger":"logging.ctx_logger","msg":"ResetDefaultLogger","pid":73847}
 }

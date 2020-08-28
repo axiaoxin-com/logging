@@ -35,8 +35,8 @@ var (
 		"pid":       syscall.Getpid(),
 		"server_ip": ServerIP(),
 	}
-	// defaultLoggerName 默认 logger name 为 root
-	defaultLoggerName = "root"
+	// defaultLoggerName 默认 logger name 为 logging
+	defaultLoggerName = "logging"
 	// defaultLoggerLevel 默认 logger 日志级别默认为 debug
 	defaultLoggerLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
 	// defaultEncoderConfig 默认的日志字段名配置

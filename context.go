@@ -53,6 +53,7 @@ func CtxLogger(c context.Context, fields ...zap.Field) *zap.Logger {
 }
 
 // CtxTraceID get trace id from context
+// Modify TraceIDPrefix change change the prefix
 func CtxTraceID(c context.Context) string {
 	if c == nil {
 		c = context.Background()

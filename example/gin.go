@@ -46,13 +46,13 @@ func main() {
 /*
 日志输出
 
-{"level":"ERROR","time":"2020-08-28 09:21:57.675677","logger":"root.gin","caller":"example/gin.go:func1:36","msg":"ping ping pong pong","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
-{"level":"INFO","time":"2020-08-28 09:21:57.675892","logger":"root.gin","caller":"example/gin.go:func1:13","msg":"func1 begin","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
-{"level":"INFO","time":"2020-08-28 09:21:57.675907","logger":"root.gin","caller":"example/gin.go:func2:20","msg":"func2 begin","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
-{"level":"INFO","time":"2020-08-28 09:21:57.675917","logger":"root.gin","caller":"example/gin.go:func3:26","msg":"in func3","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
-{"level":"INFO","time":"2020-08-28 09:21:57.675933","logger":"root.gin","caller":"example/gin.go:func2:22","msg":"func2 end","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
-{"level":"INFO","time":"2020-08-28 09:21:57.675957","logger":"root.gin","caller":"example/gin.go:func1:16","msg":"func1 end","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
-{"level":"INFO","time":"2020-08-28 09:21:57.676170","logger":"root.gin.access_logger","caller":"logging/gin.go:func1:229","msg":"2020-08-28 09:21:57.675988|127.0.0.1|GET|localhost:8080/ping|main.main.func1|200|0.000329","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0","details":{"timestamp":"2020-08-28T09:21:57.675988+08:00","method":"GET","path":"/ping","query":"","proto":"HTTP/1.1","content_length":0,"host":"localhost:8080","remote_addr":"127.0.0.1:57316","request_uri":"/ping","referer":"","user_agent":"curl/7.64.1","client_ip":"127.0.0.1","content_type":"","handler_name":"main.main.func1","status_code":200,"body_size":4,"latency":0.000328505,"context_keys":{"ctx_logger":{},"trace_id":"logging_bt45od98d3bevfj7lni0"}}}
+{"level":"ERROR","time":"2020-08-28 09:21:57.675677","logger":"logging.gin","caller":"example/gin.go:func1:36","msg":"ping ping pong pong","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
+{"level":"INFO","time":"2020-08-28 09:21:57.675892","logger":"logging.gin","caller":"example/gin.go:func1:13","msg":"func1 begin","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
+{"level":"INFO","time":"2020-08-28 09:21:57.675907","logger":"logging.gin","caller":"example/gin.go:func2:20","msg":"func2 begin","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
+{"level":"INFO","time":"2020-08-28 09:21:57.675917","logger":"logging.gin","caller":"example/gin.go:func3:26","msg":"in func3","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
+{"level":"INFO","time":"2020-08-28 09:21:57.675933","logger":"logging.gin","caller":"example/gin.go:func2:22","msg":"func2 end","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
+{"level":"INFO","time":"2020-08-28 09:21:57.675957","logger":"logging.gin","caller":"example/gin.go:func1:16","msg":"func1 end","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0"}
+{"level":"INFO","time":"2020-08-28 09:21:57.676170","logger":"logging.gin.access_logger","caller":"logging/gin.go:func1:229","msg":"2020-08-28 09:21:57.675988|127.0.0.1|GET|localhost:8080/ping|main.main.func1|200|0.000329","pid":61374,"server_ip":"10.64.35.43","trace_id":"logging_bt45od98d3bevfj7lni0","details":{"timestamp":"2020-08-28T09:21:57.675988+08:00","method":"GET","path":"/ping","query":"","proto":"HTTP/1.1","content_length":0,"host":"localhost:8080","remote_addr":"127.0.0.1:57316","request_uri":"/ping","referer":"","user_agent":"curl/7.64.1","client_ip":"127.0.0.1","content_type":"","handler_name":"main.main.func1","status_code":200,"body_size":4,"latency":0.000328505,"context_keys":{"ctx_logger":{},"trace_id":"logging_bt45od98d3bevfj7lni0"}}}
 
 请求响应头中也包含 Trace ID, 请求时如果指定 Header `-H "trace_id: x-y-z"`， demo 将使用该值作为 trace id
 

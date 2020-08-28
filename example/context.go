@@ -16,17 +16,17 @@ func main() {
 	// log with trace id
 	ctxlogger.Debug("ctxlogger with trace id debug")
 	// Output:
-	// {"level":"DEBUG","time":"2020-06-10 20:30:48.588416","logger":"root.ctxLogger","msg":"ctxlogger with trace id debug","pid":3242,"traceID":"logging-brgd4u3ipt30pamqff80"}
+	// {"level":"DEBUG","time":"2020-06-10 20:30:48.588416","logger":"logging.ctx_logger","msg":"ctxlogger with trace id debug","pid":3242,"traceID":"logging-brgd4u3ipt30pamqff80"}
 
 	// 设置 一个指定的 trace id 和 logger 到 context 中， 会尝试同时设置到 gin.Context 中
 	traceID := "this-is-a-trace-id"
 	ctx = logging.Context(ctx, logging.CloneDefaultLogger("myname"), traceID)
 	logging.Debug(ctx, "global debug with ctx")
 	// Output:
-	// {"level":"DEBUG","time":"2020-06-10 20:30:48.588510","logger":"root.myname","msg":"global debug with ctx","pid":3242,"traceID":"this-is-a-trace-id"}
+	// {"level":"DEBUG","time":"2020-06-10 20:30:48.588510","logger":"logging.myname","msg":"global debug with ctx","pid":3242,"traceID":"this-is-a-trace-id"}
 
 	ctxlogger2 := logging.CtxLogger(ctx)
 	ctxlogger2.Debug("ctxlogger2 with special trace id")
 	// Output:
-	// {"level":"DEBUG","time":"2020-06-10 20:30:48.588521","logger":"root.myname","msg":"ctxlogger2 with special trace id","pid":3242,"traceID":"this-is-a-trace-id"}
+	// {"level":"DEBUG","time":"2020-06-10 20:30:48.588521","logger":"logging.myname","msg":"ctxlogger2 with special trace id","pid":3242,"traceID":"this-is-a-trace-id"}
 }
