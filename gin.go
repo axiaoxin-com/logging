@@ -83,9 +83,10 @@ type GinLoggerConfig struct {
 	// DisableDetails 是否关闭输出 details 字段信息
 	// Optional.
 	DisableDetails bool
-	// LogBody 是否打印请求 body 和 响应 body ，开启后对性能影响严重，慎用
+	// DetailsWithBody 打印 details 时，是否记录请求 body 和 响应 body，只在 DisableDetails 为 False 时生效
+	// 开启后对性能影响严重，适用于接口调试，慎用。
 	// Optional.
-	LogBody bool
+	DetailsWithBody bool
 	// TraceIDFunc 获取或生成 trace id 的函数
 	// Optional.
 	TraceIDFunc func(*gin.Context) string
@@ -150,9 +151,8 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 	}
 	return func(c *gin.Context) {
 		traceID := getTraceID(c)
-		// 设置 trace id 到 header 中
+		// 设置 trace id 到 request header 中
 		c.Request.Header.Set(string(TraceIDKeyname), traceID)
-		c.Writer.Header().Set(string(TraceIDKeyname), traceID)
 		// 设置 trace id 和 ctxLogger 到 context 中
 		Context(c, CloneDefaultLogger("access_logger"), traceID)
 
@@ -178,11 +178,14 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 
 		// 开启记录响应 body 时，保存 body 到 rbw.body 中
 		rbw := &responseBodyWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
-		if conf.LogBody {
+		if !conf.DisableDetails && conf.DetailsWithBody {
 			c.Writer = rbw
 		}
 
 		c.Next()
+
+		// 设置 trace id 到 response header 中
+		c.Writer.Header().Set(string(TraceIDKeyname), traceID)
 
 		if _, exists := skip[msg.Path]; !exists {
 			// 获取响应信息
@@ -192,13 +195,8 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			msg.Timestamp = time.Now()
 			msg.Latency = msg.Timestamp.Sub(start).Seconds()
 
-			accessLogger := CtxLogger(c)
-			// 判断是否不打印 details 字段
-			if !conf.DisableDetails {
-				accessLogger = accessLogger.With(zap.Any("details", msg))
-			}
 			// 判断是否打印请求、响应 body
-			if conf.LogBody {
+			if !conf.DisableDetails && conf.DetailsWithBody {
 				// 获取请求 body
 				if c.Request.Body != nil {
 					body, err := ioutil.ReadAll(c.Request.Body)
@@ -213,9 +211,16 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 				// 获取响应 body
 				msg.ResponseBody = rbw.body.String()
 			}
+			msg.ContextErrors = c.Errors.String() // handler 中使用 c.Error(err) 后，会出现在这里
+
+			// msg 设置完毕 创建 logger 进行打印
+			accessLogger := CtxLogger(c)
+			// 判断是否不打印 details 字段
+			if !conf.DisableDetails {
+				accessLogger = accessLogger.With(zap.Any("details", msg))
+			}
 			// 打印访问日志，根据状态码确定日志打印级别
 			log := accessLogger.Info
-			msg.ContextErrors = c.Errors.String() // handler 中使用 c.Error(err) 后，会出现在这里
 			if msg.ContextErrors != "" || msg.StatusCode >= http.StatusInternalServerError {
 				log = accessLogger.Error
 			} else if msg.StatusCode >= http.StatusBadRequest {
