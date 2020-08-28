@@ -102,7 +102,7 @@ func GinLogger() gin.HandlerFunc {
 // gin 访问日志中 msg 字段的输出格式
 func defaultGinLogFormatter(m GinLogMsg) string {
 	_, shortHandlerName := path.Split(m.HandlerName)
-	return fmt.Sprintf("%v|%s|%s|%s%s|%s|%d|%f",
+	msg := fmt.Sprintf("%v|%s|%s|%s%s|%s|%d|%f",
 		m.Timestamp.Format("2006-01-02 15:04:05.999999999"),
 		m.ClientIP,
 		m.Method,
@@ -112,6 +112,10 @@ func defaultGinLogFormatter(m GinLogMsg) string {
 		m.StatusCode,
 		m.Latency,
 	)
+	if m.ContextErrors != "" {
+		msg += "|" + m.ContextErrors
+	}
+	return msg
 }
 
 func defaultGinTraceIDFunc(c *gin.Context) (traceID string) {
