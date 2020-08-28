@@ -47,13 +47,13 @@ func main() {
 	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991277","logger":"root.ctxLogger","msg":"Debugw message","pid":45713,"name":"axiaoxin","age":18}
 
 	/* with context */
-	c := logging.Context(context.Background(), logging.DefaultLogger(), "trace-id-123")
+	c := logging.Context(context.Background(), logging.CloneDefaultLogger("myname"), "trace-id-123")
 	logging.Debug(c, "Debug with trace id")
 	// Output:
-	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991314","logger":"root","msg":"Debug with trace id","pid":45713,"traceID":"trace-id-123"}
+	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991314","logger":"root.myname","msg":"Debug with trace id","pid":45713,"traceID":"trace-id-123"}
 
 	/* extra fields */
 	logging.Debug(c, "extra fields demo", logging.ExtraField("k1", "v1", "k2", 2, "k3", true))
 	// Output:
-	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991348","logger":"root","msg":"extra fields demo","pid":45713,"traceID":"trace-id-123","extra":{"k1":"v1","k2":2,"k3":true}}
+	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991348","logger":"root.myname","msg":"extra fields demo","pid":45713,"traceID":"trace-id-123","extra":{"k1":"v1","k2":2,"k3":true}}
 }

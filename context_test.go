@@ -11,8 +11,9 @@ import (
 )
 
 func TestGinContext(t *testing.T) {
+	gin.SetMode(gin.ReleaseMode)
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
-	Context(c, DefaultLogger(), "1234")
+	Context(c, CloneDefaultLogger("test"), "1234")
 	_, exists := c.Get(string(CtxLoggerName))
 	if !exists {
 		t.Fatal("set ctxLogger failed")
@@ -26,7 +27,7 @@ func TestGinContext(t *testing.T) {
 func TestContext(t *testing.T) {
 	c := context.Background()
 
-	c = Context(c, DefaultLogger(), "1234")
+	c = Context(c, CloneDefaultLogger("test"), "1234")
 	if tid := CtxTraceID(c); tid != "1234" {
 		t.Fatal("invalid tid", c, tid)
 	}

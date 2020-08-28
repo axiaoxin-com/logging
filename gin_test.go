@@ -15,6 +15,7 @@ func hello(c *gin.Context) {
 }
 
 func TestGinLogger(t *testing.T) {
+	gin.SetMode(gin.ReleaseMode)
 	app := gin.New()
 	app.Use(GinLogger())
 	app.GET("/hello", hello)
@@ -28,6 +29,7 @@ func TestGinLogger(t *testing.T) {
 }
 
 func TestGinLoggerWithConfig(t *testing.T) {
+	gin.SetMode(gin.ReleaseMode)
 	app := gin.New()
 	conf := GinLoggerConfig{
 		DisableDetails:  false,

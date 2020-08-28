@@ -9,25 +9,19 @@ import (
 )
 
 func main() {
-	/* 获取默认 logger */
-	defaultLogger := logging.DefaultLogger()
-	defaultLogger.Debug("DefaultLogger")
-	// Output:
-	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548141","logger":"root","msg":"DefaultLogger","pid":68701}
-
-	/* 为默认 logger 设置 sentry core */
-	// logging 内部默认的 logger 不支持 sentry 上报，可以通过以下方法设置 sentry
-	// 创建 sentry 客户端
-	sentryClient, _ := logging.NewSentryClient("YOUR_SENTRY_DSN", false)
-	// 设置 sentry ，使用该 logger 打印 Error 及其以上级别的日志事件将会自动上报到 Sentry
-	defaultLogger = logging.SentryAttach(defaultLogger, sentryClient)
-
 	/* 克隆一个带有初始字段的默认 logger */
 	// 初始字段可以不传，克隆的 logger 名称会是 root.subname ，该 logger 打印的日志都会带上传入的字段
 	cloneDefaultLogger := logging.CloneDefaultLogger("subname", zap.String("str_field", "field_value"))
 	cloneDefaultLogger.Debug("CloneDefaultLogger")
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548271","logger":"root.subname","msg":"CloneDefaultLogger","pid":68701,"str_field":"field_value"}
+
+	/* 为 clone logger 设置 sentry core */
+	// logging 内部默认的 logger 不支持 sentry 上报，可以通过以下方法设置 sentry
+	// 创建 sentry 客户端
+	sentryClient, _ := logging.NewSentryClient("YOUR_SENTRY_DSN", false)
+	// 设置 sentry ，使用该 logger 打印 Error 及其以上级别的日志事件将会自动上报到 Sentry
+	cloneDefaultLogger = logging.SentryAttach(cloneDefaultLogger, sentryClient)
 
 	/* 使用 Options 创建 logger */
 	// 可以直接使用空 Options 创建默认配置项的 logger
@@ -61,5 +55,5 @@ func main() {
 	ctxLogger := logging.CtxLogger(ctx, zap.String("field1", "xxx"))
 	ctxLogger.Debug("ctxLogger")
 	// Output:
-	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548414","logger":"root.ctxLogger","msg":"ctxLogger","pid":68701,"field1":"xxx"}
+	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548414","logger":"root.ctx_logger","msg":"ctxLogger","pid":68701,"field1":"xxx"}
 }

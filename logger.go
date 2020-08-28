@@ -216,13 +216,6 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	return logger, nil
 }
 
-// DefaultLogger return the global logger
-func DefaultLogger() *zap.Logger {
-	copy := *logger
-	clogger := &copy
-	return clogger
-}
-
 // CloneDefaultLogger return the global logger copy which add a new name
 func CloneDefaultLogger(name string, fields ...zap.Field) *zap.Logger {
 	copy := *logger
