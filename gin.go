@@ -83,7 +83,9 @@ type GinLoggerConfig struct {
 	// DisableDetails 是否关闭输出 details 字段信息
 	// Optional.
 	DisableDetails bool
-	// DetailsWithBody 打印 details 时，是否记录请求 body 和 响应 body，只在 DisableDetails 为 False 时生效
+	// DetailsWithContextKeys 打印 details 时，是否实例 context keys，只在 DisableDetails 为 false 时 生效
+	DetailsWithContextKeys bool
+	// DetailsWithBody 打印 details 时，是否记录请求 body 和 响应 body，只在 DisableDetails 为 false 时生效
 	// 开启后对性能影响严重，适用于接口调试，慎用。
 	// Optional.
 	DetailsWithBody bool
@@ -190,10 +192,13 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			// 获取响应信息
 			msg.StatusCode = c.Writer.Status()
 			msg.BodySize = c.Writer.Size()
-			msg.ContextKeys = c.Keys
 			msg.Timestamp = time.Now()
 			msg.Latency = msg.Timestamp.Sub(start).Seconds()
 
+			// 判断是否打印 context keys
+			if !conf.DisableDetails && conf.DetailsWithContextKeys {
+				msg.ContextKeys = c.Keys
+			}
 			// 判断是否打印请求、响应 body
 			if !conf.DisableDetails && conf.DetailsWithBody {
 				// 获取请求 body
