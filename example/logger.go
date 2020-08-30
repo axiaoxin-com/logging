@@ -33,7 +33,7 @@ func main() {
 
 	// 配置 Options 创建 logger
 	// 日志级别定义在外层，便于代码内部可以动态修改日志级别
-	level := logging.TextLevelMap["debug"]
+	level := logging.AtomicLevelMap["debug"]
 	options := logging.Options{
 		Name:              "logging",          // logger 名称
 		Level:             level,              // zap 的 AtomicLevel ， logger 日志级别
