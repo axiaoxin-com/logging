@@ -32,18 +32,16 @@ func main() {
 	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548323","logger":"logging","caller":"example/logger.go:main:48","msg":"emptyOptionsLogger","pid":68701}
 
 	// 配置 Options 创建 logger
-	// 日志级别定义在外层，便于代码内部可以动态修改日志级别
-	level := logging.AtomicLevelMap["debug"]
 	options := logging.Options{
 		Name:              "logging",          // logger 名称
-		Level:             level,              // zap 的 AtomicLevel ， logger 日志级别
+		Level:             "debug",            // zap 的 AtomicLevel ， logger 日志级别
 		Format:            "json",             // 日志输出格式为 json
 		OutputPaths:       []string{"stderr"}, // 日志输出位置为 stderr
 		InitialFields:     nil,                // DefaultInitialFields 初始 logger 带有 pid 字段
 		DisableCaller:     false,              // 是否打印调用的代码行位置
 		DisableStacktrace: false,              // 错误日志是否打印调用栈信息
 		SentryClient:      sentryClient,       // sentry 客户端
-		AtomicLevelAddr:   ":8080",            // http 动态修改日志级别的端口地址，不设置则不开启 http 服务
+		AtomicLevelServer: &logging.AtomicLevelServerOption{Addr: ":9999"},
 	}
 	optionsLogger, _ := logging.NewLogger(options)
 	optionsLogger.Debug("optionsLogger")

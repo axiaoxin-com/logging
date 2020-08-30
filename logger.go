@@ -69,19 +69,27 @@ var (
 	}
 )
 
+// AtomicLevelServerOption AtomicLevel server 相关配置
+type AtomicLevelServerOption struct {
+	Addr     string // http 动态修改日志级别服务运行地址
+	Path     string // 设置 url path ，可选
+	Username string // 请求时设置 basic auth 认证的用户名，可选
+	Password string // 请求时设置 basic auth 认证的密码，可选，与 username 同时存在才开启 basic auth
+}
+
 // Options new logger options
 type Options struct {
-	Name              string                 // logger 名称
-	Level             string                 // 日志级别 debug, info, warn, error dpanic, panic, fatal
-	Format            string                 // 日志格式
-	OutputPaths       []string               // 日志输出位置
-	InitialFields     map[string]interface{} // 日志初始字段
-	DisableCaller     bool                   // 是否关闭打印 caller
-	DisableStacktrace bool                   // 是否关闭打印 stackstrace
-	SentryClient      *sentry.Client         // sentry 客户端
-	AtomicLevelAddr   string                 // http 动态修改日志级别的地址，传空不启用
-	EncoderConfig     zapcore.EncoderConfig  // 配置日志字段 key 的名称
-	LumberjackSink    *LumberjackSink        // lumberjack sink 支持日志文件 rotate
+	Name              string                  // logger 名称
+	Level             string                  // 日志级别 debug, info, warn, error dpanic, panic, fatal
+	Format            string                  // 日志格式
+	OutputPaths       []string                // 日志输出位置
+	InitialFields     map[string]interface{}  // 日志初始字段
+	DisableCaller     bool                    // 是否关闭打印 caller
+	DisableStacktrace bool                    // 是否关闭打印 stackstrace
+	SentryClient      *sentry.Client          // sentry 客户端
+	EncoderConfig     zapcore.EncoderConfig   // 配置日志字段 key 的名称
+	LumberjackSink    *LumberjackSink         // lumberjack sink 支持日志文件 rotate
+	AtomicLevelServer AtomicLevelServerOption // AtomicLevel server 相关配置
 }
 
 const (
@@ -118,9 +126,11 @@ func init() {
 		DisableCaller:     false,
 		DisableStacktrace: true,
 		SentryClient:      sentryClient,
-		AtomicLevelAddr:   os.Getenv(AtomicLevelAddrEnvKey),
-		EncoderConfig:     encoderConfig,
-		LumberjackSink:    nil,
+		AtomicLevelServer: AtomicLevelServerOption{
+			Addr: os.Getenv(AtomicLevelAddrEnvKey),
+		},
+		EncoderConfig:  encoderConfig,
+		LumberjackSink: nil,
 	}
 	logger, err = NewLogger(options)
 	if err != nil {
@@ -136,6 +146,7 @@ func NewLogger(options Options) (*zap.Logger, error) {
 		cfg.Level = atomicLevel
 	} else {
 		cfg.Level = AtomicLevelMap[options.Level]
+		atomicLevel = cfg.Level
 	}
 	// 设置 encoding 默认为 json
 	if strings.ToLower(options.Format) == "console" {
@@ -201,8 +212,8 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	} else {
 		logger = logger.Named(loggerName)
 	}
-	if options.AtomicLevelAddr != "" {
-		runAtomicLevelServer(cfg.Level, options.AtomicLevelAddr)
+	if options.AtomicLevelServer.Addr != "" {
+		runAtomicLevelServer(cfg.Level, options.AtomicLevelServer)
 	}
 	return logger, nil
 }
@@ -241,7 +252,7 @@ func TextLevel() string {
 	return string(b)
 }
 
-// SetLevel 使用字符串级别设置 atomic level
+// SetLevel 使用字符串级别设置默认 logger 的 atomic level
 func SetLevel(lvl string) {
 	atomicLevel.UnmarshalText([]byte(lvl))
 }
@@ -265,13 +276,18 @@ func ServerIP() string {
 }
 
 // 运行 atomic level server
-func runAtomicLevelServer(atomicLevel zap.AtomicLevel, addr string) {
+func runAtomicLevelServer(atomicLevel zap.AtomicLevel, options AtomicLevelServerOption) {
 	go func() {
 		// curl -X GET http://host:port
 		// curl -X PUT http://host:port -d '{"level":"info"}'
-		Debug(nil, "Running AtomicLevel HTTP server on "+addr)
+		Debug(nil, "Running AtomicLevel HTTP server on "+options.Addr+options.Path)
+		urlPath := "/"
+		if options.Path != "" {
+			urlPath = options.Path
+		}
+
 		levelServer := http.NewServeMux()
-		levelServer.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		levelServer.HandleFunc(urlPath, func(w http.ResponseWriter, r *http.Request) {
 			msg := fmt.Sprintf("%s %s the logger atomic level", r.RemoteAddr, r.Method)
 			if r.Method == http.MethodPut {
 				b, _ := ioutil.ReadAll(r.Body)
@@ -279,9 +295,15 @@ func runAtomicLevelServer(atomicLevel zap.AtomicLevel, addr string) {
 				r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
 			}
 			Warn(nil, msg)
+			if options.Username != "" && options.Password != "" {
+				if _, _, ok := r.BasicAuth(); !ok {
+					http.Error(w, "need to basic auth", http.StatusUnauthorized)
+					return
+				}
+			}
 			atomicLevel.ServeHTTP(w, r)
 		})
-		if err := http.ListenAndServe(addr, levelServer); err != nil {
+		if err := http.ListenAndServe(options.Addr, levelServer); err != nil {
 			Error(nil, "logging NewLogger levelServer ListenAndServe error:"+err.Error())
 		}
 	}()

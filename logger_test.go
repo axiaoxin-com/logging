@@ -42,7 +42,7 @@ func TestNewLogger(t *testing.T) {
 		DisableCaller:     false,
 		DisableStacktrace: false,
 		SentryClient:      sc,
-		AtomicLevelAddr:   ":1903",
+		AtomicLevelServer: AtomicLevelServerOption{Addr: ":1903"},
 	}
 	logger, err := NewLogger(options)
 	if err != nil {
