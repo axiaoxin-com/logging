@@ -255,6 +255,7 @@ func TextLevel() string {
 
 // SetLevel 使用字符串级别设置默认 logger 的 atomic level
 func SetLevel(lvl string) {
+	Warn(nil, "Set logging atomicLevel "+lvl)
 	atomicLevel.UnmarshalText([]byte(strings.ToLower(lvl)))
 }
 
