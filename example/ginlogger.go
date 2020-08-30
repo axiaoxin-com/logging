@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/axiaoxin-com/logging"
 	"github.com/gin-gonic/gin"
@@ -9,8 +10,11 @@ import (
 
 func main() {
 
+	// set sentry dsn, error level's log will report to sentry automatically
+	os.Setenv(logging.SentryDSNEnvKey, "http://your-sentry-dsn")
 	gin.SetMode(gin.ReleaseMode)
 	app := gin.New()
+	// you can custom the config or use logging.GinLogger() by default config
 	conf := logging.GinLoggerConfig{
 		Formatter: func(m logging.GinLogMsg) string {
 			return fmt.Sprintf("%s use %s request %s, handler %s use %f seconds to respond it with %d at %v",

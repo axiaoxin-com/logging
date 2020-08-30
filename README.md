@@ -83,7 +83,10 @@ logging 可以在代码中对 AtomicLevel 调用 SetLevel 动态修改日志级�
 
 **示例 [example/gorm.go](example/gorm.go)**
 
-## 通过 gin 的访问日志中间件 GinLogger
+## gin middleware: GinLogger
+
+GinLogger uses zap to log detailed access logs in JSON or text format with trace id, supports flexible and rich configuration,
+and supports automatic reporting of log events above error level to sentry
 
 相关文章： <https://github.com/axiaoxin/axiaoxin/issues/17>
 
