@@ -27,23 +27,23 @@ import (
 )
 
 var (
-	// logger default global zap Logger with pid field
+	// global zap Logger with pid field
 	logger *zap.Logger
 	// 默认 sentry client
-	defaultSentryClient *sentry.Client
-	// defaultOutPaths zap 日志默认输出位置
-	defaultOutPaths = []string{"stdout"}
-	// defaultInitialFields 默认初始字段为进程 id
-	defaultInitialFields = map[string]interface{}{
+	sentryClient *sentry.Client
+	// outPaths zap 日志默认输出位置
+	outPaths = []string{"stdout"}
+	// initialFields 默认初始字段为进程 id
+	initialFields = map[string]interface{}{
 		"pid":       syscall.Getpid(),
 		"server_ip": ServerIP(),
 	}
-	// defaultLoggerName 默认 logger name 为 logging
-	defaultLoggerName = "logging"
-	// defaultLoggerLevel 默认 logger 日志级别默认为 debug
-	defaultLoggerLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
-	// defaultEncoderConfig 默认的日志字段名配置
-	defaultEncoderConfig = zapcore.EncoderConfig{
+	// loggerName 默认 logger name 为 logging
+	loggerName = "logging"
+	// atomicLevel 默认 logger atomic level 级别默认为 debug
+	atomicLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
+	// encoderConfig 默认的日志字段名配置
+	encoderConfig = zapcore.EncoderConfig{
 		TimeKey:        "time",
 		LevelKey:       "level",
 		NameKey:        "logger",
@@ -93,7 +93,7 @@ const (
 	AtomicLevelAddrEnvKey = "ATOMIC_LEVEL_ADDR"
 )
 
-// init the global default logger
+// init the global logger
 func init() {
 	var err error
 	// 尝试从环境变量获取 sentry dsn
@@ -103,23 +103,23 @@ func init() {
 		if strings.ToLower(debugStr) != "" {
 			debug = true
 		}
-		defaultSentryClient, err = NewSentryClient(dsn, debug)
+		sentryClient, err = NewSentryClient(dsn, debug)
 		if err != nil {
 			log.Println(err)
 		}
 	}
 
 	options := Options{
-		Name:              defaultLoggerName,
-		Level:             defaultLoggerLevel,
+		Name:              loggerName,
+		Level:             atomicLevel,
 		Format:            "json",
-		OutputPaths:       defaultOutPaths,
-		InitialFields:     defaultInitialFields,
+		OutputPaths:       outPaths,
+		InitialFields:     initialFields,
 		DisableCaller:     false,
 		DisableStacktrace: true,
-		SentryClient:      defaultSentryClient,
+		SentryClient:      sentryClient,
 		AtomicLevelAddr:   os.Getenv(AtomicLevelAddrEnvKey),
-		EncoderConfig:     defaultEncoderConfig,
+		EncoderConfig:     encoderConfig,
 		LumberjackSink:    nil,
 	}
 	logger, err = NewLogger(options)
@@ -133,7 +133,7 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	cfg := zap.Config{}
 	// 设置日志级别
 	if options.Level == (zap.AtomicLevel{}) {
-		cfg.Level = defaultLoggerLevel
+		cfg.Level = atomicLevel
 	} else {
 		cfg.Level = options.Level
 	}
@@ -145,8 +145,8 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	}
 	// 设置 output 没有传参默认全部输出到 stderr
 	if len(options.OutputPaths) == 0 {
-		cfg.OutputPaths = defaultOutPaths
-		cfg.ErrorOutputPaths = defaultOutPaths
+		cfg.OutputPaths = outPaths
+		cfg.ErrorOutputPaths = outPaths
 	} else {
 		cfg.OutputPaths = options.OutputPaths
 		cfg.ErrorOutputPaths = options.OutputPaths
@@ -155,10 +155,10 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	// 传了就添加到现有的初始化字段中
 	if len(options.InitialFields) > 0 {
 		for k, v := range options.InitialFields {
-			defaultInitialFields[k] = v
+			initialFields[k] = v
 		}
 	}
-	cfg.InitialFields = defaultInitialFields
+	cfg.InitialFields = initialFields
 	// 设置 disablecaller
 	cfg.DisableCaller = options.DisableCaller
 	// 设置 disablestacktrace
@@ -166,7 +166,7 @@ func NewLogger(options Options) (*zap.Logger, error) {
 
 	// 设置 encoderConfig
 	if reflect.DeepEqual(options.EncoderConfig, zapcore.EncoderConfig{}) {
-		cfg.EncoderConfig = defaultEncoderConfig
+		cfg.EncoderConfig = encoderConfig
 	} else {
 		cfg.EncoderConfig = options.EncoderConfig
 	}
@@ -199,7 +199,7 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	if options.Name != "" {
 		logger = logger.Named(options.Name)
 	} else {
-		logger = logger.Named(defaultLoggerName)
+		logger = logger.Named(loggerName)
 	}
 	if options.AtomicLevelAddr != "" {
 		runAtomicLevelServer(cfg.Level, options.AtomicLevelAddr)
@@ -207,8 +207,8 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	return logger, nil
 }
 
-// CloneDefaultLogger return the global logger copy which add a new name
-func CloneDefaultLogger(name string, fields ...zap.Field) *zap.Logger {
+// CloneLogger return the global logger copy which add a new name
+func CloneLogger(name string, fields ...zap.Field) *zap.Logger {
 	copy := *logger
 	clogger := &copy
 	clogger = clogger.Named(name)
@@ -225,29 +225,30 @@ func AttachCore(l *zap.Logger, c zapcore.Core) *zap.Logger {
 	}))
 }
 
-// DefaultInitialFields return defaultInitialFields
-func DefaultInitialFields() map[string]interface{} {
-	return defaultInitialFields
-}
-
-// ReplaceDefaultLogger 替换默认的全局 logger 为传入的新 logger
+// ReplaceLogger 替换默认的全局 logger 为传入的新 logger
 // 返回函数，调用它可以恢复全局 logger 为上一次的 logger
-func ReplaceDefaultLogger(newLogger *zap.Logger) func() {
+func ReplaceLogger(newLogger *zap.Logger) func() {
 	// 备份原始 logger 以便恢复
 	prevLogger := logger
 	// 替换为新 logger
 	logger = newLogger
-	return func() { ReplaceDefaultLogger(prevLogger) }
+	return func() { ReplaceLogger(prevLogger) }
 }
 
-// DefaultLoggerLevel 返回默认 logger 的 level
-func DefaultLoggerLevel() zap.AtomicLevel {
-	return defaultLoggerLevel
+// TextLevel 返回默认 logger 的 字符串 level
+func TextLevel() string {
+	b, _ := atomicLevel.MarshalText()
+	return string(b)
 }
 
-// DefaultSentryClient 返回默认 sentry client
-func DefaultSentryClient() *sentry.Client {
-	return defaultSentryClient
+// SetLevel 使用字符串级别设置 atomic level
+func SetLevel(lvl string) {
+	atomicLevel.UnmarshalText([]byte(lvl))
+}
+
+// SentryClient 返回默认 sentry client
+func SentryClient() *sentry.Client {
+	return sentryClient
 }
 
 // ServerIP 获取当前 IP

@@ -20,7 +20,7 @@ func main() {
 
 	// 设置 一个指定的 trace id 和 logger 到 context 中， 会尝试同时设置到 gin.Context 中
 	traceID := "this-is-a-trace-id"
-	ctx = logging.Context(ctx, logging.CloneDefaultLogger("myname"), traceID)
+	ctx = logging.Context(ctx, logging.CloneLogger("myname"), traceID)
 	logging.Debug(ctx, "global debug with ctx")
 	// Output:
 	// {"level":"DEBUG","time":"2020-06-10 20:30:48.588510","logger":"logging.myname","msg":"global debug with ctx","pid":3242,"traceID":"this-is-a-trace-id"}

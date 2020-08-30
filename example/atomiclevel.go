@@ -66,10 +66,8 @@ func main() {
 	// 修改前 Output:
 	// {"level":"INFO","time":"2020-04-16 13:33:50.178265","logger":"logging.ctx_logger","msg":"default logger level","pid":45311}
 
-	// 获取默认 logger 的 level
-	defaultLoggerLevel := logging.DefaultLoggerLevel()
 	// 修改 level 为 error
-	defaultLoggerLevel.SetLevel(zap.ErrorLevel)
+	logging.SetLevel("error")
 
 	// info 将不会打印
 	logging.Info(nil, "info level will not be print")

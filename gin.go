@@ -162,7 +162,7 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 		// 设置 trace id 到 response header 中
 		c.Writer.Header().Set(string(TraceIDKeyname), traceID)
 		// 设置 trace id 和 ctxLogger 到 context 中
-		Context(c, CloneDefaultLogger("gin"), traceID)
+		Context(c, CloneLogger("gin"), traceID)
 
 		start := time.Now()
 

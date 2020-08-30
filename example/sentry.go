@@ -10,7 +10,7 @@ import (
 func main() {
 	debug := true
 	sentryClient, _ := logging.NewSentryClient(os.Getenv("dsn"), debug)
-	logger := logging.CloneDefaultLogger("sentry")
+	logger := logging.CloneLogger("sentry")
 	logger = logging.SentryAttach(logger, sentryClient)
 	logger.Error("hello sentry!")
 	time.Sleep(2 * time.Second)

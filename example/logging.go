@@ -15,8 +15,8 @@ func main() {
 	// 全局方法使用的默认 logger 在默认情况下不支持 sentry 上报，通过配置环境变量 SENTRY_DSN 后自动支持
 	logging.Error(nil, "dsn env")
 
-	// 如果环境变量配置了 sentry dsn ，则会创建一个默认 sentry client 并初始化 sentry ，可以通过 DefaultSentryClient 获取原始的 sentry client
-	if logging.DefaultSentryClient() != nil {
+	// 如果环境变量配置了 sentry dsn ，则会创建一个默认 sentry client 并初始化 sentry ，可以通过 SentryClient 获取原始的 sentry client
+	if logging.SentryClient() != nil {
 		// 如果已经初始化过 sentry ，则可以使用 sentry hub 直接上报数据到 sentry
 		sentry.CaptureMessage("hello sentry hub msg!")
 		sentry.Flush(2 * time.Second)
@@ -47,7 +47,7 @@ func main() {
 	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991277","logger":"logging.ctx_logger","msg":"Debugw message","pid":45713,"name":"axiaoxin","age":18}
 
 	/* with context */
-	c := logging.Context(context.Background(), logging.CloneDefaultLogger("myname"), "trace-id-123")
+	c := logging.Context(context.Background(), logging.CloneLogger("myname"), "trace-id-123")
 	logging.Debug(c, "Debug with trace id")
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991314","logger":"logging.myname","msg":"Debug with trace id","pid":45713,"traceID":"trace-id-123"}

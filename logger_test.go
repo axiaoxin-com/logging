@@ -85,22 +85,30 @@ func TestNewLogger(t *testing.T) {
 
 }
 
-func TestCloneDefaultLogger(t *testing.T) {
-	nlogger := CloneDefaultLogger("cloned")
+func TestCloneLogger(t *testing.T) {
+	nlogger := CloneLogger("cloned")
 	if reflect.DeepEqual(nlogger, logger) {
-		t.Error("CloneDefaultLogger should not be default logger")
+		t.Error("CloneLogger should not be default logger")
 	}
 	if &nlogger == &logger {
-		t.Error("CloneDefaultLogger should not be default logger")
+		t.Error("CloneLogger should not be default logger")
 	}
 }
 
 func TestSetLevel(t *testing.T) {
 	logger.Debug("TestChangeLevel raw debug level")
-	t.Log("current level:", defaultLoggerLevel.Level())
-	defaultLoggerLevel.SetLevel(zap.InfoLevel)
-	t.Log("new level:", defaultLoggerLevel.Level())
+	t.Log("current level:", atomicLevel.Level())
+	atomicLevel.SetLevel(zap.InfoLevel)
+	t.Log("new level:", atomicLevel.Level())
 	logger.Debug("TestChangeLevel raw debug level should not be logged")
 	// reset
-	defaultLoggerLevel.SetLevel(zap.DebugLevel)
+	atomicLevel.SetLevel(zap.DebugLevel)
+}
+
+func TestTextLevel(t *testing.T) {
+	level := TextLevel()
+	if level != "debug" {
+		t.Error(level)
+	}
+
 }

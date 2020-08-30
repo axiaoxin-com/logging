@@ -199,7 +199,7 @@ func ExtraField(keysAndValues ...interface{}) zap.Field {
 
 // SentryCaptureMessage 上报 message 信息到 sentry
 func SentryCaptureMessage(msg string) error {
-	if DefaultSentryClient() == nil {
+	if SentryClient() == nil {
 		return errors.New("Sentry client is nil, please set the sentry dsn config")
 	}
 	defer sentry.Flush(2 * time.Second)
@@ -209,7 +209,7 @@ func SentryCaptureMessage(msg string) error {
 
 // SentryCaptureException 上报 error 信息到 sentry
 func SentryCaptureException(err error) error {
-	if DefaultSentryClient() == nil {
+	if SentryClient() == nil {
 		return errors.New("Sentry client is nil, please set the sentry dsn config")
 	}
 	defer sentry.Flush(2 * time.Second)

@@ -38,7 +38,7 @@ func CtxLogger(c context.Context, fields ...zap.Field) *zap.Logger {
 	if ctxLoggerItf != nil {
 		ctxLogger = ctxLoggerItf.(*zap.Logger)
 	} else {
-		ctxLogger = CloneDefaultLogger(string(CtxLoggerName))
+		ctxLogger = CloneLogger(string(CtxLoggerName))
 	}
 
 	// try to get trace id from ctx

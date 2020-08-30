@@ -1,6 +1,6 @@
 // 默认的 logging 全局开箱即用的方法（如： logging.Debug , logging.Debugf 等）都是使用默认 logger 执行的，
 // 默认 logger 不支持 Sentry 和输出日志到文件，可以通过创建一个新的 logger，
-// 再使用 ReplaceDefaultLogger 方法替换默认 logger 为新的 logger 来解决。
+// 再使用 ReplaceLogger 方法替换默认 logger 为新的 logger 来解决。
 
 package main
 
@@ -26,18 +26,18 @@ func main() {
 	}
 	logger, _ := logging.NewLogger(options)
 	// 替换默认 logger
-	resetLogger := logging.ReplaceDefaultLogger(logger)
+	resetLogger := logging.ReplaceLogger(logger)
 
 	// 全局方法将使用新的 logger，上报 sentry 并输出到文件
-	logging.Error(nil, "ReplaceDefaultLogger")
+	logging.Error(nil, "ReplaceLogger")
 	// Output并保存到文件:
-	// {"level":"ERROR","time":"2020-04-15 20:09:23.661927","logger":"replacedLogger.ctx_logger","caller":"logging/global.go:Error:166","msg":"ReplaceDefaultLogger","pid":73847,"stacktrace":"github.com/axiaoxin-com/logging.Error\n\t/Users/ashin/go/src/logging/global.go:166\nmain.main\n\t/Users/ashin/go/src/logging/example/replace.go:30\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
+	// {"level":"ERROR","time":"2020-04-15 20:09:23.661927","logger":"replacedLogger.ctx_logger","caller":"logging/global.go:Error:166","msg":"ReplaceLogger","pid":73847,"stacktrace":"github.com/axiaoxin-com/logging.Error\n\t/Users/ashin/go/src/logging/global.go:166\nmain.main\n\t/Users/ashin/go/src/logging/example/replace.go:30\nruntime.main\n\t/usr/local/go/src/runtime/proc.go:203"}
 
 	// 重置默认 logger
 	resetLogger()
 
 	// 全局方法将恢复使用原始的 logger，不再上报 sentry 和输出到文件
-	logging.Error(nil, "ResetDefaultLogger")
+	logging.Error(nil, "ResetLogger")
 	// Output:
-	// {"level":"ERROR","time":"2020-04-15 20:09:23.742995","logger":"logging.ctx_logger","msg":"ResetDefaultLogger","pid":73847}
+	// {"level":"ERROR","time":"2020-04-15 20:09:23.742995","logger":"logging.ctx_logger","msg":"ResetLogger","pid":73847}
 }

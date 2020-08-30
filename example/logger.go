@@ -11,7 +11,7 @@ import (
 func main() {
 	/* 克隆一个带有初始字段的默认 logger */
 	// 初始字段可以不传，克隆的 logger 名称会是 logging.subname ，该 logger 打印的日志都会带上传入的字段
-	cloneDefaultLogger := logging.CloneDefaultLogger("subname", zap.String("str_field", "field_value"))
+	cloneDefaultLogger := logging.CloneLogger("subname", zap.String("str_field", "field_value"))
 	cloneDefaultLogger.Debug("CloneDefaultLogger")
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:39:37.548271","logger":"logging.subname","msg":"CloneDefaultLogger","pid":68701,"str_field":"field_value"}
@@ -35,15 +35,15 @@ func main() {
 	// 日志级别定义在外层，便于代码内部可以动态修改日志级别
 	level := logging.TextLevelMap["debug"]
 	options := logging.Options{
-		Name:              "logging",                      // logger 名称
-		Level:             level,                          // zap 的 AtomicLevel ， logger 日志级别
-		Format:            "json",                         // 日志输出格式为 json
-		OutputPaths:       []string{"stderr"},             // 日志输出位置为 stderr
-		InitialFields:     logging.DefaultInitialFields(), // DefaultInitialFields 初始 logger 带有 pid 字段
-		DisableCaller:     false,                          // 是否打印调用的代码行位置
-		DisableStacktrace: false,                          // 错误日志是否打印调用栈信息
-		SentryClient:      sentryClient,                   // sentry 客户端
-		AtomicLevelAddr:   ":8080",                        // http 动态修改日志级别的端口地址，不设置则不开启 http 服务
+		Name:              "logging",          // logger 名称
+		Level:             level,              // zap 的 AtomicLevel ， logger 日志级别
+		Format:            "json",             // 日志输出格式为 json
+		OutputPaths:       []string{"stderr"}, // 日志输出位置为 stderr
+		InitialFields:     nil,                // DefaultInitialFields 初始 logger 带有 pid 字段
+		DisableCaller:     false,              // 是否打印调用的代码行位置
+		DisableStacktrace: false,              // 错误日志是否打印调用栈信息
+		SentryClient:      sentryClient,       // sentry 客户端
+		AtomicLevelAddr:   ":8080",            // http 动态修改日志级别的端口地址，不设置则不开启 http 服务
 	}
 	optionsLogger, _ := logging.NewLogger(options)
 	optionsLogger.Debug("optionsLogger")

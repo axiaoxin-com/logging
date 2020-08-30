@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	// DefaultLogFilename 默认日志文件名
-	DefaultLogFilename = "/tmp/logging.log"
+	// LogFilename 默认日志文件名
+	LogFilename = "/tmp/logging.log"
 )
 
 // LumberjackSink 将日志输出到 lumberjack 进行 rotate
@@ -34,7 +34,7 @@ func (LumberjackSink) Sync() error {
 func RegisterLumberjackSink(sink *LumberjackSink) error {
 	err := zap.RegisterSink(sink.Scheme, func(*url.URL) (zap.Sink, error) {
 		if sink.Filename == "" {
-			sink.Filename = DefaultLogFilename
+			sink.Filename = LogFilename
 		}
 		return sink, nil
 	})

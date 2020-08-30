@@ -44,7 +44,7 @@ func G(traceID string) {
 
 	// 模拟一个 ctx ，并将 logger 和 traceID 设置到 ctx 中
 	// 这里使用 Options 设置为打印 caller 字段
-	ctx := logging.Context(context.Background(), logging.CloneDefaultLogger("example").WithOptions(zap.AddCaller()), traceID)
+	ctx := logging.Context(context.Background(), logging.CloneLogger("example").WithOptions(zap.AddCaller()), traceID)
 
 	// 打印带 trace id 的 gorm 日志
 	// 必须先对 db 对象设置带有 trace id 的 ctxlogger 作为 sql 日志打印的 logger
