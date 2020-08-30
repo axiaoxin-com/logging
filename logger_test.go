@@ -33,10 +33,9 @@ func TestNewLogger(t *testing.T) {
 	if err != nil {
 		// t.Error("TestNewLogger NewSentryClient err", err)
 	}
-	level := zap.NewAtomicLevelAt(zap.DebugLevel)
 	options := Options{
 		Name:              "tlogger",
-		Level:             level,
+		Level:             "debug",
 		Format:            "json",
 		OutputPaths:       []string{"stderr"},
 		InitialFields:     map[string]interface{}{"service_name": "testing"},

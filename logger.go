@@ -57,8 +57,8 @@ var (
 		EncodeCaller:   CallerEncoder,
 	}
 
-	// TextLevelMap string level mapping zap AtomicLevel
-	TextLevelMap = map[string]zap.AtomicLevel{
+	// AtomicLevelMap string level mapping zap AtomicLevel
+	AtomicLevelMap = map[string]zap.AtomicLevel{
 		"debug":  zap.NewAtomicLevelAt(zap.DebugLevel),
 		"info":   zap.NewAtomicLevelAt(zap.InfoLevel),
 		"warn":   zap.NewAtomicLevelAt(zap.WarnLevel),
@@ -72,7 +72,7 @@ var (
 // Options new logger options
 type Options struct {
 	Name              string                 // logger 名称
-	Level             zap.AtomicLevel        // 日志级别
+	Level             string                 // 日志级别 debug, info, warn, error dpanic, panic, fatal
 	Format            string                 // 日志格式
 	OutputPaths       []string               // 日志输出位置
 	InitialFields     map[string]interface{} // 日志初始字段
@@ -111,7 +111,7 @@ func init() {
 
 	options := Options{
 		Name:              loggerName,
-		Level:             atomicLevel,
+		Level:             "debug",
 		Format:            "json",
 		OutputPaths:       outPaths,
 		InitialFields:     initialFields,
@@ -132,10 +132,10 @@ func init() {
 func NewLogger(options Options) (*zap.Logger, error) {
 	cfg := zap.Config{}
 	// 设置日志级别
-	if options.Level == (zap.AtomicLevel{}) {
+	if _, exists := AtomicLevelMap[options.Level]; !exists {
 		cfg.Level = atomicLevel
 	} else {
-		cfg.Level = options.Level
+		cfg.Level = AtomicLevelMap[options.Level]
 	}
 	// 设置 encoding 默认为 json
 	if strings.ToLower(options.Format) == "console" {
