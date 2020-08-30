@@ -10,6 +10,9 @@
 package logging
 
 import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -199,19 +202,7 @@ func NewLogger(options Options) (*zap.Logger, error) {
 		logger = logger.Named(defaultLoggerName)
 	}
 	if options.AtomicLevelAddr != "" {
-		go func() {
-			// curl -X GET http://host:port
-			// curl -X PUT http://host:port -d '{"level":"info"}'
-			Debug(nil, "Running AtomicLevel HTTP server on "+options.AtomicLevelAddr)
-			levelServer := http.NewServeMux()
-			levelServer.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-				cfg.Level.ServeHTTP(w, r)
-				Debug(nil, "Handled AtomicLevel HTTP request", zap.String("method", r.Method))
-			})
-			if err := http.ListenAndServe(options.AtomicLevelAddr, levelServer); err != nil {
-				Error(nil, "logging NewLogger levelServer ListenAndServe error", zap.Error(err))
-			}
-		}()
+		runAtomicLevelServer(cfg.Level, options.AtomicLevelAddr)
 	}
 	return logger, nil
 }
@@ -270,4 +261,27 @@ func ServerIP() string {
 	localAddr := conn.LocalAddr().(*net.UDPAddr)
 
 	return localAddr.IP.String()
+}
+
+// 运行 atomic level server
+func runAtomicLevelServer(atomicLevel zap.AtomicLevel, addr string) {
+	go func() {
+		// curl -X GET http://host:port
+		// curl -X PUT http://host:port -d '{"level":"info"}'
+		Debug(nil, "Running AtomicLevel HTTP server on "+addr)
+		levelServer := http.NewServeMux()
+		levelServer.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			msg := fmt.Sprintf("%s %s the logger atomic level", r.RemoteAddr, r.Method)
+			if r.Method == http.MethodPut {
+				b, _ := ioutil.ReadAll(r.Body)
+				msg += " to " + string(b)
+				r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+			}
+			Warn(nil, msg)
+			atomicLevel.ServeHTTP(w, r)
+		})
+		if err := http.ListenAndServe(addr, levelServer); err != nil {
+			Error(nil, "logging NewLogger levelServer ListenAndServe error:"+err.Error())
+		}
+	}()
 }
