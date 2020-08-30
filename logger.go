@@ -142,10 +142,11 @@ func init() {
 func NewLogger(options Options) (*zap.Logger, error) {
 	cfg := zap.Config{}
 	// 设置日志级别
-	if _, exists := AtomicLevelMap[options.Level]; !exists {
+	lvl := strings.ToLower(options.Level)
+	if _, exists := AtomicLevelMap[lvl]; !exists {
 		cfg.Level = atomicLevel
 	} else {
-		cfg.Level = AtomicLevelMap[options.Level]
+		cfg.Level = AtomicLevelMap[lvl]
 		atomicLevel = cfg.Level
 	}
 	// 设置 encoding 默认为 json
@@ -254,7 +255,7 @@ func TextLevel() string {
 
 // SetLevel 使用字符串级别设置默认 logger 的 atomic level
 func SetLevel(lvl string) {
-	atomicLevel.UnmarshalText([]byte(lvl))
+	atomicLevel.UnmarshalText([]byte(strings.ToLower(lvl)))
 }
 
 // SentryClient 返回默认 sentry client
