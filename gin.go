@@ -70,8 +70,6 @@ type GinLogMsg struct {
 	Latency float64 `json:"latency"`
 	// Context 中的 Keys
 	ContextKeys map[string]interface{} `json:"context_keys,omitempty"`
-	// 请求处理过程中的错误信息
-	ContextErrors string `json:"context_errors,omitempty"`
 	// RequestBody 请求 body
 	RequestBody string `json:"request_body,omitempty"`
 	// ResponseBody 响应 Body
@@ -117,9 +115,6 @@ func defaultGinLogFormatter(m GinLogMsg) string {
 		m.StatusCode,
 		m.Latency,
 	)
-	if m.ContextErrors != "" {
-		msg += "|" + m.ContextErrors
-	}
 	return msg
 }
 
@@ -224,17 +219,21 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 				// 获取响应 body
 				msg.ResponseBody = rbw.body.String()
 			}
-			msg.ContextErrors = c.Errors.String() // handler 中使用 c.Error(err) 后，会出现在这里
 
 			// msg 设置完毕 创建 logger 进行打印
 			accessLogger := CtxLogger(c).Named("access_logger")
+
+			// handler 中使用 c.Error(err) 后，会打印到 context_errors 字段中
+			if len(c.Errors) > 0 {
+				accessLogger = accessLogger.With(zap.String("context_errors", c.Errors.String()))
+			}
 			// 判断是否不打印 details 字段
 			if !conf.DisableDetails {
 				accessLogger = accessLogger.With(zap.Any("details", msg))
 			}
 			// 打印访问日志，根据状态码确定日志打印级别
 			log := accessLogger.Info
-			if msg.ContextErrors != "" || msg.StatusCode >= http.StatusInternalServerError {
+			if len(c.Errors) > 0 || msg.StatusCode >= http.StatusInternalServerError {
 				log = accessLogger.Error
 			} else if msg.StatusCode >= http.StatusBadRequest {
 				log = accessLogger.Warn
