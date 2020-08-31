@@ -2,10 +2,15 @@ package logging
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"os"
 	"path"
+	"runtime/debug"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -249,4 +254,36 @@ type responseBodyWriter struct {
 func (w responseBodyWriter) Write(b []byte) (int, error) {
 	w.body.Write(b)
 	return w.ResponseWriter.Write(b)
+}
+
+// GinRecovery gin recovery 中间件
+func GinRecovery() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		defer func() {
+			if err := recover(); err != nil {
+				// Check for a broken connection, as it is not really a
+				// condition that warrants a panic stack trace.
+				var brokenPipe bool
+				if ne, ok := err.(*net.OpError); ok {
+					if se, ok := ne.Err.(*os.SyscallError); ok {
+						if strings.Contains(strings.ToLower(se.Error()), "broken pipe") || strings.Contains(strings.ToLower(se.Error()), "connection reset by peer") {
+							brokenPipe = true
+						}
+					}
+				}
+				if brokenPipe {
+					// save err in context
+					c.Error(errors.New(fmt.Sprint("Broken pipe:", err, "\n", string(debug.Stack()))))
+					c.Abort()
+					return
+				}
+
+				// save err in context
+				c.Error(errors.New(fmt.Sprint("Recovery from panic:", err, "\n", string(debug.Stack()))))
+				c.AbortWithStatus(http.StatusInternalServerError)
+				return
+			}
+		}()
+		c.Next()
+	}
 }

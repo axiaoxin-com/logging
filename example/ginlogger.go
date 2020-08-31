@@ -27,7 +27,9 @@ func main() {
 		TraceIDFunc:            func(c *gin.Context) string { return "fake-uuid" },
 	}
 	app.Use(logging.GinLoggerWithConfig(conf))
+	app.Use(logging.GinRecovery())
 	app.POST("/ping", func(c *gin.Context) {
+		panic("xxx")
 		c.JSON(200, "pong")
 	})
 	app.Run(":8888")
