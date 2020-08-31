@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httputil"
 	"os"
 	"path"
 	"runtime/debug"
@@ -86,9 +87,9 @@ type GinLoggerConfig struct {
 	// DisableDetails 是否关闭输出 details 字段信息
 	// Optional.
 	DisableDetails bool
-	// DetailsWithContextKeys 打印 details 时，是否实例 context keys，只在 DisableDetails 为 false 时 生效
+	// DetailsWithContextKeys 打印 details 时，是否实例 context keys ，只在 DisableDetails 为 false 时 生效
 	DetailsWithContextKeys bool
-	// DetailsWithBody 打印 details 时，是否记录请求 body 和 响应 body，只在 DisableDetails 为 false 时生效
+	// DetailsWithBody 打印 details 时，是否记录请求 body 和 响应 body ，只在 DisableDetails 为 false 时生效
 	// 开启后对性能影响严重，适用于接口调试，慎用。
 	// Optional.
 	DetailsWithBody bool
@@ -136,8 +137,9 @@ func defaultGinTraceIDFunc(c *gin.Context) (traceID string) {
 }
 
 // GinLoggerWithConfig 根据配置信息生成 gin 的 Logger 中间件
-// 中间件会记录访问信息，根据状态码确定日志级别， 500 以上为 Error ， 400-500 为 Warn ， 400 以下为 Info
+// 中间件会记录访问信息，根据状态码确定日志级别， 500 以上为 Error ， 400-500 默认为 Warn ， 400 以下默认为 Info
 // api 请求进来的 context 的函数无需在其中打印 err ，使用 c.Error(err)会在请求完成时自动打印 error
+// context 中有 error 则日志忽略返回码始终使用 error 级别
 func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 	formatter := conf.Formatter
 	if formatter == nil {
@@ -187,6 +189,8 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 		// 开启记录响应 body 时，保存 body 到 rbw.body 中
 		rbw := &responseBodyWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
 		if !conf.DisableDetails && conf.DetailsWithBody {
+			// 获取并保存请求 body
+			msg.RequestBody = string(GetRequestBody(c))
 			c.Writer = rbw
 		}
 
@@ -203,44 +207,62 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			if !conf.DisableDetails && conf.DetailsWithContextKeys {
 				msg.ContextKeys = c.Keys
 			}
-			// 判断是否打印请求、响应 body
+			// 获取并保存响应 body
 			if !conf.DisableDetails && conf.DetailsWithBody {
-				// 获取请求 body
-				if c.Request.Body != nil {
-					body, err := ioutil.ReadAll(c.Request.Body)
-					if err != nil {
-						c.Error(err)
-					} else {
-						msg.RequestBody = string(body)
-						// body 被 read 、 bind 之后会被置空，需要重置
-						c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-					}
-				}
-				// 获取响应 body
 				msg.ResponseBody = rbw.body.String()
 			}
 
 			// msg 设置完毕 创建 logger 进行打印
 			accessLogger := CtxLogger(c).Named("access_logger")
-
 			// handler 中使用 c.Error(err) 后，会打印到 context_errors 字段中
 			if len(c.Errors) > 0 {
 				accessLogger = accessLogger.With(zap.String("context_errors", c.Errors.String()))
 			}
-			// 判断是否不打印 details 字段
-			if !conf.DisableDetails {
-				accessLogger = accessLogger.With(zap.Any("details", msg))
+
+			// details logger 打印 details msg 字段
+			detailsLogger := accessLogger.Named("details").With(zap.Any("details", msg))
+
+			logger := detailsLogger
+			// 是否不打印 details 字段
+			if conf.DisableDetails {
+				logger = accessLogger
 			}
+
 			// 打印访问日志，根据状态码确定日志打印级别
-			log := accessLogger.Info
-			if len(c.Errors) > 0 || msg.StatusCode >= http.StatusInternalServerError {
-				log = accessLogger.Error
+			log := logger.Info
+			if msg.StatusCode >= http.StatusInternalServerError {
+				// 500+ 始终打印带 details 的 error 级别日志，并附带请求信息
+				requestDumps, _ := httputil.DumpRequest(c.Request, true)
+				log = detailsLogger.With(zap.String("request", string(requestDumps))).Error
 			} else if msg.StatusCode >= http.StatusBadRequest {
-				log = accessLogger.Warn
+				// 400+ 默认使用 warn 级别。如果有 errors 则使用 error 级别
+				log = logger.Warn
+				if len(c.Errors) > 0 {
+					log = logger.Error
+				}
+			} else if len(c.Errors) > 0 {
+				log = logger.Error
 			}
 			log(formatter(msg))
 		}
 	}
+}
+
+// GetRequestBody 获取请求 body
+func GetRequestBody(c *gin.Context) []byte {
+	// 获取请求 body
+	var requestBody []byte
+	if c.Request.Body != nil {
+		body, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			c.Error(err)
+		} else {
+			requestBody = body
+			// body 被 read 、 bind 之后会被置空，需要重置
+			c.Request.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		}
+	}
+	return requestBody
 }
 
 // 用于记录响应 body
@@ -256,6 +278,7 @@ func (w responseBodyWriter) Write(b []byte) (int, error) {
 }
 
 // GinRecovery gin recovery 中间件
+// save err in context and abort 500 with do errhandler
 func GinRecovery(errHandler ...func(*gin.Context, ...interface{})) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {

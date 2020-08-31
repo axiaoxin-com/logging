@@ -2,16 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/axiaoxin-com/logging"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-
-	// set sentry dsn, error level's log will report to sentry automatically
-	os.Setenv(logging.SentryDSNEnvKey, "http://your-sentry-dsn")
 	gin.SetMode(gin.ReleaseMode)
 	app := gin.New()
 	// you can custom the config or use logging.GinLogger() by default config
@@ -29,8 +25,8 @@ func main() {
 	app.Use(logging.GinLoggerWithConfig(conf))
 	app.Use(logging.GinRecovery())
 	app.POST("/ping", func(c *gin.Context) {
-		panic("xxx")
-		c.JSON(200, "pong")
+		// panic("xx")
+		c.JSON(200, string(logging.GetRequestBody(c)))
 	})
 	app.Run(":8888")
 }
