@@ -256,7 +256,7 @@ func (w responseBodyWriter) Write(b []byte) (int, error) {
 }
 
 // GinRecovery gin recovery 中间件
-func GinRecovery() gin.HandlerFunc {
+func GinRecovery(errHandler ...func(*gin.Context, ...interface{})) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
@@ -273,12 +273,18 @@ func GinRecovery() gin.HandlerFunc {
 				if brokenPipe {
 					// save err in context
 					c.Error(errors.New(fmt.Sprint("Broken pipe:", err, "\n", string(debug.Stack()))))
-					c.Abort()
+					if len(errHandler) > 0 {
+						errHandler[0](c)
+					}
+					c.AbortWithStatus(http.StatusInternalServerError)
 					return
 				}
 
 				// save err in context
 				c.Error(errors.New(fmt.Sprint("Recovery from panic:", err, "\n", string(debug.Stack()))))
+				if len(errHandler) > 0 {
+					errHandler[0](c)
+				}
 				c.AbortWithStatus(http.StatusInternalServerError)
 				return
 			}
