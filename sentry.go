@@ -104,7 +104,7 @@ func (c *sentryCore) Write(ent zapcore.Entry, fs []zapcore.Field) error {
 	event.Message = ent.Message
 	event.Timestamp = ent.Time
 	event.Level = sentryLevel(ent.Level)
-	event.Platform = "Golang"
+	event.Platform = "go"
 	event.Extra = clone.fields
 	event.Tags = c.cfg.Tags
 
