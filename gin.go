@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	jsoniter "github.com/json-iterator/go"
 	"go.uber.org/zap"
 )
 
@@ -76,9 +77,9 @@ type GinLogDetails struct {
 	// http Request Form
 	RequestForm url.Values `json:"request_form,omitempty"`
 	// 请求 body
-	RequestBody string `json:"request_body,omitempty"`
+	RequestBody interface{} `json:"request_body,omitempty"`
 	// 响应 Body
-	ResponseBody string `json:"response_body,omitempty"`
+	ResponseBody interface{} `json:"response_body,omitempty"`
 }
 
 // GinLoggerConfig GinLogger 支持的配置项字段定义
@@ -197,7 +198,9 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 
 		// 获取并保存请求 body
 		if conf.EnableDetails && conf.DetailsWithRequestBody {
-			details.RequestBody = string(GetRequestBody(c))
+			if err := jsoniter.Unmarshal(GetGinRequestBody(c), &details.RequestBody); err != nil {
+				details.RequestBody = string(GetGinRequestBody(c))
+			}
 		}
 		// 获取并保存请求 form
 		if conf.EnableDetails && conf.DetailsWithRequestForm {
@@ -227,7 +230,9 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			}
 			// 获取并保存响应 body
 			if conf.EnableDetails && conf.DetailsWithResponseBody {
-				details.ResponseBody = rbw.body.String()
+				if err := jsoniter.Unmarshal(rbw.body.Bytes(), &details.ResponseBody); err != nil {
+					details.ResponseBody = rbw.body.String()
+				}
 			}
 
 			// details 设置完毕 创建 logger 进行打印
@@ -272,8 +277,8 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 	}
 }
 
-// GetRequestBody 获取请求 body
-func GetRequestBody(c *gin.Context) []byte {
+// GetGinRequestBody 获取请求 body
+func GetGinRequestBody(c *gin.Context) []byte {
 	// 获取请求 body
 	var requestBody []byte
 	if c.Request.Body != nil {
