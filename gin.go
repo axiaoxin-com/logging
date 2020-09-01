@@ -279,9 +279,11 @@ func (w responseBodyWriter) Write(b []byte) (int, error) {
 
 // GinRecovery gin recovery 中间件
 // save err in context and abort with 500
-func GinRecovery() gin.HandlerFunc {
+func GinRecovery(statusHandler ...func(c *gin.Context, status int, data interface{}, err error, extraMsgs ...interface{})) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
+			status := c.Writer.Status()
+
 			if err := recover(); err != nil {
 				// Check for a broken connection, as it is not really a
 				// condition that warrants a panic stack trace.
@@ -296,16 +298,31 @@ func GinRecovery() gin.HandlerFunc {
 				if brokenPipe {
 					// save err in context
 					c.Error(errors.New(fmt.Sprint("Broken pipe:", err, "\n", string(debug.Stack()))))
-					c.AbortWithStatus(http.StatusInternalServerError)
+					if len(statusHandler) > 0 {
+						status = http.StatusInternalServerError
+						statusHandler[0](c, status, nil, errors.New(http.StatusText(status)))
+					} else {
+						c.AbortWithStatus(http.StatusInternalServerError)
+					}
 					return
 				}
 
 				// save err in context
 				c.Error(errors.New(fmt.Sprint("Recovery from panic:", err, "\n", string(debug.Stack()))))
-				c.AbortWithStatus(http.StatusInternalServerError)
+				if len(statusHandler) > 0 {
+					status = http.StatusInternalServerError
+					statusHandler[0](c, status, nil, errors.New(http.StatusText(status)))
+				} else {
+					c.AbortWithStatus(http.StatusInternalServerError)
+				}
 				return
 			}
+
+			if len(statusHandler) > 0 && status >= 400 {
+				statusHandler[0](c, status, nil, errors.New(http.StatusText(status)))
+			}
 		}()
+
 		c.Next()
 	}
 }
