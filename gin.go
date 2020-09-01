@@ -37,11 +37,11 @@ func GetGinTraceIDFromPostForm(c *gin.Context) string {
 // GinLogDetails gin 日志中间件记录的信息
 type GinLogDetails struct {
 	// 请求处理完成时间
-	Timestamp time.Time `json:"-"`
+	Timestamp time.Time `json:"timestamp"`
 	// 请求方法
-	Method string `json:"-"`
+	Method string `json:"method"`
 	// 请求 Path
-	Path string `json:"-"`
+	Path string `json:"path"`
 	// 请求 RawQuery
 	Query string `json:"query"`
 	// http 协议版本
@@ -49,7 +49,7 @@ type GinLogDetails struct {
 	// 请求内容长度
 	ContentLength int `json:"content_length"`
 	// 请求的 host host:port
-	Host string `json:"-"`
+	Host string `json:"host"`
 	// 请求 remote addr  host:port
 	RemoteAddr string `json:"remote_addr"`
 	// uri
@@ -59,17 +59,17 @@ type GinLogDetails struct {
 	// user agent
 	UserAgent string `json:"user_agent"`
 	// 真实客户端 ip
-	ClientIP string `json:"-"`
+	ClientIP string `json:"client_ip"`
 	// content type
 	ContentType string `json:"content_type"`
 	// handler name
 	HandlerName string `json:"handler_name"`
 	// http 状态码
-	StatusCode int `json:"-"`
+	StatusCode int `json:"status_code"`
 	// 响应 body 字节数
 	BodySize int `json:"body_size"`
 	// 请求处理耗时 (秒)
-	Latency float64 `json:"-"`
+	Latency float64 `json:"latency"`
 	// Context 中的 Keys
 	ContextKeys map[string]interface{} `json:"context_keys,omitempty"`
 	// http request header
@@ -89,23 +89,30 @@ type GinLoggerConfig struct {
 	// SkipPaths is a url path array which logs are not written.
 	// Optional.
 	SkipPaths []string
-	// enableDetails 是否输出 details 字段信息
-	// Optional.
-	EnableDetails bool
-	// 以下选项开启后对性能有影响，适用于接口调试，慎用。
-	// DetailsWithContextKeys 打印 details 时，是否实例 context keys ，只在 EnableDetails 时生效
-	DetailsWithContextKeys bool
-	// 打印 details 时，是否打印请求头信息，只在 EnableDetails 时生效
-	DetailsWithRequestHeader bool
-	// 打印 details 时，是否打印请求form信息，只在 EnableDetails 时生效
-	DetailsWithRequestForm bool
-	// 打印 details 时，是否打印请求体信息，只在 EnableDetails 时生效
-	DetailsWithRequestBody bool
-	// 打印 details 时，是否打印响应体信息，只在 EnableDetails 时生效
-	DetailsWithResponseBody bool
 	// TraceIDFunc 获取或生成 trace id 的函数
 	// Optional.
 	TraceIDFunc func(*gin.Context) string
+	// 是否使用详细模式打印日志，记录更多字段信息
+	// Optional.
+	EnableDetails bool
+
+	// 以下选项开启后对性能有影响，适用于接口调试，慎用。
+
+	// 是否打印 context keys
+	// Optional.
+	EnableContextKeys bool
+	// 是否打印请求头信息
+	// Optional.
+	EnableRequestHeader bool
+	// 是否打印请求form信息
+	// Optional.
+	EnableRequestForm bool
+	// 是否打印请求体信息
+	// Optional.
+	EnableRequestBody bool
+	// 是否打印响应体信息
+	// Optional.
+	EnableResponseBody bool
 }
 
 // GinLogger 以默认配置生成 gin 的 Logger 中间件
@@ -116,8 +123,7 @@ func GinLogger() gin.HandlerFunc {
 // gin 访问日志中 msg 字段的输出格式
 func defaultGinLogFormatter(m GinLogDetails) string {
 	_, shortHandlerName := path.Split(m.HandlerName)
-	msg := fmt.Sprintf("%v|%s|%s|%s%s|%s|%d|%f",
-		m.Timestamp.Format("2006-01-02 15:04:05.999999999"),
+	msg := fmt.Sprintf("%s|%s|%s%s|%s|%d|%f",
 		m.ClientIP,
 		m.Method,
 		m.Host,
@@ -196,23 +202,24 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			HandlerName: c.HandlerName(),
 		}
 
-		// 获取并保存请求 body
-		if conf.EnableDetails && conf.DetailsWithRequestBody {
+		// 获取并保存原始请求 body
+		if conf.EnableRequestBody {
 			if err := jsoniter.Unmarshal(GetGinRequestBody(c), &details.RequestBody); err != nil {
 				details.RequestBody = string(GetGinRequestBody(c))
 			}
 		}
-		// 获取并保存请求 form
-		if conf.EnableDetails && conf.DetailsWithRequestForm {
+		// 获取并保存原始请求 form
+		if conf.EnableRequestForm {
 			details.RequestForm = c.Request.Form
 		}
-		if conf.EnableDetails && conf.DetailsWithRequestHeader {
+		// 获取并保存原始请求 header
+		if conf.EnableRequestHeader {
 			details.RequestHeader = c.Request.Header
 		}
-		// 开启记录响应 body 时，保存 body 到 rbw.body 中
-		rbw := &responseBodyWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
-		if conf.EnableDetails && conf.DetailsWithResponseBody {
-			c.Writer = rbw
+		rspBodyWriter := &responseBodyWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
+		if conf.EnableResponseBody {
+			// 开启记录响应 body 时，保存 body 到 rspBodyWriter.body 中
+			c.Writer = rspBodyWriter
 		}
 
 		c.Next()
@@ -224,18 +231,7 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			details.Timestamp = time.Now()
 			details.Latency = details.Timestamp.Sub(start).Seconds()
 
-			// 判断是否打印 context keys
-			if conf.EnableDetails && conf.DetailsWithContextKeys {
-				details.ContextKeys = c.Keys
-			}
-			// 获取并保存响应 body
-			if conf.EnableDetails && conf.DetailsWithResponseBody {
-				if err := jsoniter.Unmarshal(rbw.body.Bytes(), &details.ResponseBody); err != nil {
-					details.ResponseBody = rbw.body.String()
-				}
-			}
-
-			// details 设置完毕 创建 logger 进行打印
+			// 创建 logger
 			accessLogger := CtxLogger(c).Named("access_logger").With(
 				zap.String("client_ip", details.ClientIP),
 				zap.String("method", details.Method),
@@ -248,9 +244,44 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			if len(c.Errors) > 0 {
 				accessLogger = accessLogger.With(zap.String("context_errors", c.Errors.String()))
 			}
+			// 判断是否打印 context keys
+			if conf.EnableContextKeys {
+				details.ContextKeys = c.Keys
+				accessLogger = accessLogger.With(zap.Any("context_keys", details.ContextKeys))
+			}
+			// 判断是否打印请求 header
+			if conf.EnableRequestHeader {
+				accessLogger = accessLogger.With(zap.Any("request_header", details.RequestHeader))
+			}
+			// 判断是否打印请求 form
+			if conf.EnableRequestForm {
+				accessLogger = accessLogger.With(zap.Any("request_form", details.RequestForm))
+			}
+			// 判断是否打印请求 body
+			if conf.EnableRequestBody {
+				accessLogger = accessLogger.With(zap.Any("request_body", details.RequestBody))
+			}
+			// 判断是否打印响应 body
+			if conf.EnableResponseBody {
+				if err := jsoniter.Unmarshal(rspBodyWriter.body.Bytes(), &details.ResponseBody); err != nil {
+					details.ResponseBody = rspBodyWriter.body.String()
+				}
+				accessLogger = accessLogger.With(zap.Any("response_body", details.ResponseBody))
+			}
 
-			// detailsLogger 打印 details 字段
-			detailsLogger := accessLogger.Named("details").With(zap.Any("details", details))
+			// details logger 可以打印更多字段
+			detailsLogger := accessLogger.Named("details").With(
+				zap.String("query", details.Query),
+				zap.String("proto", details.Proto),
+				zap.Int("content_length", details.ContentLength),
+				zap.String("remote_addr", details.RemoteAddr),
+				zap.String("request_uri", details.RequestURI),
+				zap.String("referer", details.Referer),
+				zap.String("user_agent", details.UserAgent),
+				zap.String("content_type", details.ContentType),
+				zap.Int("body_size", details.BodySize),
+				zap.String("handler_name", details.HandlerName),
+			)
 
 			logger := accessLogger
 			// 是否打印 details 字段
@@ -261,8 +292,25 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			// 打印访问日志，根据状态码确定日志打印级别
 			log := logger.Info
 			if details.StatusCode >= http.StatusInternalServerError {
-				// 500+ 始终打印带 details 的 error 级别日志，并附带请求信息
-				log = detailsLogger.With(zap.Any("request", c.Request)).Error
+				// 500+ 始终打印带 details 的 error 级别日志
+				errLogger := detailsLogger.Named("err")
+				// 无视配置开关，打印全部能搜集的信息
+				if len(details.ContextKeys) == 0 {
+					errLogger = errLogger.With(zap.Any("context_keys", c.Keys))
+				}
+				if len(details.RequestHeader) == 0 {
+					errLogger = errLogger.With(zap.Any("request_header", c.Request.Header))
+				}
+				if len(details.RequestForm) == 0 {
+					errLogger = errLogger.With(zap.Any("request_form", c.Request.Form))
+				}
+				if details.RequestBody == nil {
+					errLogger = errLogger.With(zap.String("request_body", string(GetGinRequestBody(c))))
+				}
+				if details.ResponseBody == nil {
+					errLogger = errLogger.With(zap.String("response_body", rspBodyWriter.body.String()))
+				}
+				log = errLogger.Error
 			} else if details.StatusCode >= http.StatusBadRequest {
 				// 400+ 默认使用 warn 级别。如果有 errors 则使用 error 级别
 				log = logger.Warn

@@ -35,14 +35,15 @@ func TestGinLoggerWithConfig(t *testing.T) {
 	gin.SetMode(gin.ReleaseMode)
 	app := gin.New()
 	conf := GinLoggerConfig{
-		EnableDetails:            true,
-		DetailsWithRequestHeader: true,
-		DetailsWithContextKeys:   true,
-		DetailsWithRequestBody:   true,
-		DetailsWithRequestForm:   true,
-		DetailsWithResponseBody:  true,
-		Formatter:                func(m GinLogDetails) string { return fmt.Sprintln(m.StatusCode, m.RequestURI) },
-		TraceIDFunc:              func(c *gin.Context) string { return "xx-xx-xx-xx" },
+		EnableDetails:       true,
+		EnableContextKeys:   true,
+		EnableRequestBody:   true,
+		EnableRequestForm:   true,
+		EnableResponseBody:  true,
+		EnableRequestHeader: true,
+		Formatter:           func(m GinLogDetails) string { return fmt.Sprintln(m.StatusCode, m.RequestURI) },
+		TraceIDFunc:         func(c *gin.Context) string { return "xx-xx-xx-xx" },
+		SkipPaths:           []string{},
 	}
 	app.Use(GinLoggerWithConfig(conf))
 	app.POST("/hello", hello)
