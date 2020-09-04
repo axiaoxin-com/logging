@@ -19,6 +19,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/getsentry/sentry-go"
@@ -67,6 +68,8 @@ var (
 		"panic":  zap.NewAtomicLevelAt(zap.PanicLevel),
 		"fatal":  zap.NewAtomicLevelAt(zap.FatalLevel),
 	}
+	// 互斥锁
+	rwMutex sync.RWMutex
 )
 
 // AtomicLevelServerOption AtomicLevel server 相关配置
@@ -221,6 +224,8 @@ func NewLogger(options Options) (*zap.Logger, error) {
 
 // CloneLogger return the global logger copy which add a new name
 func CloneLogger(name string, fields ...zap.Field) *zap.Logger {
+	rwMutex.RLock()
+	defer rwMutex.RUnlock()
 	copy := *logger
 	clogger := &copy
 	clogger = clogger.Named(name)
@@ -240,6 +245,8 @@ func AttachCore(l *zap.Logger, c zapcore.Core) *zap.Logger {
 // ReplaceLogger 替换默认的全局 logger 为传入的新 logger
 // 返回函数，调用它可以恢复全局 logger 为上一次的 logger
 func ReplaceLogger(newLogger *zap.Logger) func() {
+	rwMutex.Lock()
+	defer rwMutex.Unlock()
 	// 备份原始 logger 以便恢复
 	prevLogger := logger
 	// 替换为新 logger
