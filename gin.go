@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -84,6 +85,8 @@ type GinLoggerConfig struct {
 	// SkipPaths is a url path array which logs are not written.
 	// Optional.
 	SkipPaths []string
+	// SkipPathRegexps skip path by regexp
+	SkipPathRegexps []string
 	// TraceIDFunc 获取或生成 trace id 的函数
 	// Optional.
 	TraceIDFunc func(*gin.Context) string
@@ -168,6 +171,15 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			skip[path] = struct{}{}
 		}
 	}
+	var skipRegexps []*regexp.Regexp
+	for _, p := range conf.SkipPathRegexps {
+		if r, err := regexp.Compile(p); err != nil {
+			Error(nil, "skip path regexps compile "+p+" error:"+err.Error())
+		} else {
+			skipRegexps = append(skipRegexps, r)
+		}
+	}
+
 	return func(c *gin.Context) {
 		traceID := getTraceID(c)
 		// 设置 trace id 到 request header 中
@@ -218,102 +230,115 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 		}
 
 		defer func() {
-			if _, exists := skip[details.Path]; !exists {
-				// 获取响应信息
-				details.StatusCode = c.Writer.Status()
-				details.BodySize = c.Writer.Size()
-				details.Timestamp = time.Now()
-				details.Latency = details.Timestamp.Sub(start).Seconds()
+			// 获取响应信息
+			details.StatusCode = c.Writer.Status()
+			details.BodySize = c.Writer.Size()
+			details.Timestamp = time.Now()
+			details.Latency = details.Timestamp.Sub(start).Seconds()
 
-				// 创建 logger
-				accessLogger := CtxLogger(c).Named("access_logger").With(
-					zap.String("client_ip", details.ClientIP),
-					zap.String("method", details.Method),
-					zap.String("path", details.Path),
-					zap.String("host", details.Host),
-					zap.Int("status_code", details.StatusCode),
-					zap.Float64("latency", details.Latency),
-				)
-				// handler 中使用 c.Error(err) 后，会打印到 context_errors 字段中
+			// 创建 logger
+			accessLogger := CtxLogger(c).Named("access_logger").With(
+				zap.String("client_ip", details.ClientIP),
+				zap.String("method", details.Method),
+				zap.String("path", details.Path),
+				zap.String("host", details.Host),
+				zap.Int("status_code", details.StatusCode),
+				zap.Float64("latency", details.Latency),
+			)
+			// handler 中使用 c.Error(err) 后，会打印到 context_errors 字段中
+			if len(c.Errors) > 0 {
+				accessLogger = accessLogger.With(zap.String("context_errors", c.Errors.String()))
+			}
+			// 判断是否打印 context keys
+			if conf.EnableContextKeys {
+				details.ContextKeys = c.Keys
+				accessLogger = accessLogger.With(zap.Any("context_keys", details.ContextKeys))
+			}
+			// 判断是否打印请求 header
+			if conf.EnableRequestHeader {
+				accessLogger = accessLogger.With(zap.Any("request_header", details.RequestHeader))
+			}
+			// 判断是否打印请求 form
+			if conf.EnableRequestForm {
+				accessLogger = accessLogger.With(zap.Any("request_form", details.RequestForm))
+			}
+			// 判断是否打印请求 body
+			if conf.EnableRequestBody {
+				accessLogger = accessLogger.With(zap.Any("request_body", details.RequestBody))
+			}
+			// 判断是否打印响应 body
+			if conf.EnableResponseBody {
+				if err := jsoniter.Unmarshal(rspBodyWriter.body.Bytes(), &details.ResponseBody); err != nil {
+					details.ResponseBody = rspBodyWriter.body.String()
+				}
+				accessLogger = accessLogger.With(zap.Any("response_body", details.ResponseBody))
+			}
+
+			// details logger 可以打印更多字段
+			detailsLogger := accessLogger.Named("details").With(
+				zap.String("query", details.Query),
+				zap.String("proto", details.Proto),
+				zap.Int("content_length", details.ContentLength),
+				zap.String("remote_addr", details.RemoteAddr),
+				zap.String("request_uri", details.RequestURI),
+				zap.String("referer", details.Referer),
+				zap.String("user_agent", details.UserAgent),
+				zap.String("content_type", details.ContentType),
+				zap.Int("body_size", details.BodySize),
+				zap.String("handler_name", details.HandlerName),
+			)
+
+			logger := accessLogger
+			// 是否打印 details 字段
+			if conf.EnableDetails {
+				logger = detailsLogger
+			}
+
+			// 打印访问日志，根据状态码确定日志打印级别
+			log := logger.Info
+			if details.StatusCode >= http.StatusInternalServerError {
+				// 500+ 始终打印带 details 的 error 级别日志
+				errLogger := detailsLogger.Named("err")
+				// 无视配置开关，打印全部能搜集的信息
+				if len(details.ContextKeys) == 0 {
+					errLogger = errLogger.With(zap.Any("context_keys", c.Keys))
+				}
+				if len(details.RequestHeader) == 0 {
+					errLogger = errLogger.With(zap.Any("request_header", c.Request.Header))
+				}
+				if len(details.RequestForm) == 0 {
+					errLogger = errLogger.With(zap.Any("request_form", c.Request.Form))
+				}
+				if details.RequestBody == nil {
+					errLogger = errLogger.With(zap.String("request_body", string(GetGinRequestBody(c))))
+				}
+				if details.ResponseBody == nil {
+					errLogger = errLogger.With(zap.String("response_body", rspBodyWriter.body.String()))
+				}
+				log = errLogger.Error
+			} else if details.StatusCode >= http.StatusBadRequest {
+				// 400+ 默认使用 warn 级别。如果有 errors 则使用 error 级别
+				log = logger.Warn
 				if len(c.Errors) > 0 {
-					accessLogger = accessLogger.With(zap.String("context_errors", c.Errors.String()))
-				}
-				// 判断是否打印 context keys
-				if conf.EnableContextKeys {
-					details.ContextKeys = c.Keys
-					accessLogger = accessLogger.With(zap.Any("context_keys", details.ContextKeys))
-				}
-				// 判断是否打印请求 header
-				if conf.EnableRequestHeader {
-					accessLogger = accessLogger.With(zap.Any("request_header", details.RequestHeader))
-				}
-				// 判断是否打印请求 form
-				if conf.EnableRequestForm {
-					accessLogger = accessLogger.With(zap.Any("request_form", details.RequestForm))
-				}
-				// 判断是否打印请求 body
-				if conf.EnableRequestBody {
-					accessLogger = accessLogger.With(zap.Any("request_body", details.RequestBody))
-				}
-				// 判断是否打印响应 body
-				if conf.EnableResponseBody {
-					if err := jsoniter.Unmarshal(rspBodyWriter.body.Bytes(), &details.ResponseBody); err != nil {
-						details.ResponseBody = rspBodyWriter.body.String()
-					}
-					accessLogger = accessLogger.With(zap.Any("response_body", details.ResponseBody))
-				}
-
-				// details logger 可以打印更多字段
-				detailsLogger := accessLogger.Named("details").With(
-					zap.String("query", details.Query),
-					zap.String("proto", details.Proto),
-					zap.Int("content_length", details.ContentLength),
-					zap.String("remote_addr", details.RemoteAddr),
-					zap.String("request_uri", details.RequestURI),
-					zap.String("referer", details.Referer),
-					zap.String("user_agent", details.UserAgent),
-					zap.String("content_type", details.ContentType),
-					zap.Int("body_size", details.BodySize),
-					zap.String("handler_name", details.HandlerName),
-				)
-
-				logger := accessLogger
-				// 是否打印 details 字段
-				if conf.EnableDetails {
-					logger = detailsLogger
-				}
-
-				// 打印访问日志，根据状态码确定日志打印级别
-				log := logger.Info
-				if details.StatusCode >= http.StatusInternalServerError {
-					// 500+ 始终打印带 details 的 error 级别日志
-					errLogger := detailsLogger.Named("err")
-					// 无视配置开关，打印全部能搜集的信息
-					if len(details.ContextKeys) == 0 {
-						errLogger = errLogger.With(zap.Any("context_keys", c.Keys))
-					}
-					if len(details.RequestHeader) == 0 {
-						errLogger = errLogger.With(zap.Any("request_header", c.Request.Header))
-					}
-					if len(details.RequestForm) == 0 {
-						errLogger = errLogger.With(zap.Any("request_form", c.Request.Form))
-					}
-					if details.RequestBody == nil {
-						errLogger = errLogger.With(zap.String("request_body", string(GetGinRequestBody(c))))
-					}
-					if details.ResponseBody == nil {
-						errLogger = errLogger.With(zap.String("response_body", rspBodyWriter.body.String()))
-					}
-					log = errLogger.Error
-				} else if details.StatusCode >= http.StatusBadRequest {
-					// 400+ 默认使用 warn 级别。如果有 errors 则使用 error 级别
-					log = logger.Warn
-					if len(c.Errors) > 0 {
-						log = logger.Error
-					}
-				} else if len(c.Errors) > 0 {
 					log = logger.Error
 				}
+			} else if len(c.Errors) > 0 {
+				log = logger.Error
+			}
+
+			skipLog := false
+			if _, exists := skip[details.Path]; exists {
+				skipLog = true
+			} else {
+				for _, p := range skipRegexps {
+					if p.MatchString(details.Path) {
+						skipLog = true
+						break
+					}
+				}
+			}
+
+			if !skipLog {
 				log(formatter(details))
 			}
 		}()
