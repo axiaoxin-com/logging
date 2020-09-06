@@ -12,8 +12,54 @@ import (
 
 	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )
+
+var (
+	// GinPromNamespace gin prometheus namespace
+	GinPromNamespace = "logging_prom_gin"
+	// GinPromLabels gin prometheus labels
+	GinPromLabels = []string{
+		"status_code",
+		"path",
+		"method",
+	}
+	promGinUptime = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: GinPromNamespace,
+			Name:      "uptime",
+			Help:      "server uptime",
+		}, nil,
+	)
+	promGinReqCount = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: GinPromNamespace,
+			Name:      "request_count",
+			Help:      "http request count",
+		}, GinPromLabels,
+	)
+	promGinReqLatency = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: GinPromNamespace,
+			Name:      "request_latency",
+			Help:      "http request latency in seconds",
+		}, GinPromLabels,
+	)
+)
+
+// registers the prometheus metrics
+func init() {
+	if err := prometheus.Register(promGinUptime); err != nil {
+		Error(nil, "Register prometheus gin uptime error:"+err.Error())
+	}
+	if err := prometheus.Register(promGinReqCount); err != nil {
+		Error(nil, "Register prometheus gin request count error:"+err.Error())
+	}
+	if err := prometheus.Register(promGinReqLatency); err != nil {
+		Error(nil, "Register prometheus gin request latency error:"+err.Error())
+	}
+}
 
 // GetGinTraceIDFromHeader 从 gin 的 request header 中获取 key 为 TraceIDKeyname 的值作为 traceid
 func GetGinTraceIDFromHeader(c *gin.Context) string {
@@ -340,6 +386,11 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 
 			if !skipLog {
 				log(formatter(details))
+
+				// update prometheus info
+				labels := []string{fmt.Sprint(details.StatusCode), details.Path, details.Method}
+				promGinReqCount.WithLabelValues(labels...).Inc()
+				promGinReqLatency.WithLabelValues(labels...).Observe(details.Latency)
 			}
 		}()
 
