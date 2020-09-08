@@ -415,9 +415,9 @@ func (w responseBodyWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-// PromMetricsGinHandler handler of the prometheus metrics exporter
+// WrapGinPromExporter return a handler as the prometheus metrics exporter
 // not a middleware
-func PromMetricsGinHandler(collectors ...prometheus.Collector) gin.HandlerFunc {
+func WrapGinPromExporter(collectors ...prometheus.Collector) gin.HandlerFunc {
 	if err := prometheus.Register(promGinUptime); err != nil {
 		Error(nil, "Register prometheus gin uptime error:"+err.Error())
 	}
