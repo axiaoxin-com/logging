@@ -302,8 +302,10 @@ func runAtomicLevelServer(atomicLevel zap.AtomicLevel, options AtomicLevelServer
 				b, _ := ioutil.ReadAll(r.Body)
 				msg += " to " + string(b)
 				r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
+				CtxLogger(r.Context()).Warn(msg)
+			} else {
+				CtxLogger(r.Context()).Info(msg)
 			}
-			Warn(nil, msg)
 			if options.Username != "" && options.Password != "" {
 				if _, _, ok := r.BasicAuth(); !ok {
 					http.Error(w, "need to basic auth", http.StatusUnauthorized)
