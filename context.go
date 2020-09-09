@@ -73,6 +73,9 @@ func NewCtxLogger(c context.Context, logger *zap.Logger, traceID string) (contex
 	if c == nil {
 		c = context.Background()
 	}
+	if traceID == "" {
+		traceID = CtxTraceID(c)
+	}
 	ctxLogger := logger.With(zap.String(string(TraceIDKeyname), traceID))
 	if gc, ok := c.(*gin.Context); ok {
 		// set ctxlogger in gin.Context

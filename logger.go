@@ -298,13 +298,14 @@ func runAtomicLevelServer(atomicLevel zap.AtomicLevel, options AtomicLevelServer
 		levelServer := http.NewServeMux()
 		levelServer.HandleFunc(urlPath, func(w http.ResponseWriter, r *http.Request) {
 			msg := fmt.Sprintf("%s %s the logger atomic level", r.RemoteAddr, r.Method)
+			_, logger := NewCtxLogger(r.Context(), CloneLogger("atomiclevel"), r.Header.Get(string(TraceIDKeyname)))
 			if r.Method == http.MethodPut {
 				b, _ := ioutil.ReadAll(r.Body)
 				msg += " to " + string(b)
 				r.Body = ioutil.NopCloser(bytes.NewBuffer(b))
-				CtxLogger(r.Context()).Warn(msg)
+				logger.Warn(msg)
 			} else {
-				CtxLogger(r.Context()).Info(msg)
+				logger.Info(msg)
 			}
 			if options.Username != "" && options.Password != "" {
 				if _, _, ok := r.BasicAuth(); !ok {
