@@ -47,7 +47,7 @@ func main() {
 	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991277","logger":"logging.ctx_logger","msg":"Debugw message","pid":45713,"name":"axiaoxin","age":18}
 
 	/* with context */
-	c := logging.Context(context.Background(), logging.CloneLogger("myname"), "trace-id-123")
+	c, _ := logging.NewCtxLogger(context.Background(), logging.CloneLogger("myname"), "trace-id-123")
 	logging.Debug(c, "Debug with trace id")
 	// Output:
 	// {"level":"DEBUG","time":"2020-04-15 18:12:11.991314","logger":"logging.myname","msg":"Debug with trace id","pid":45713,"traceID":"trace-id-123"}

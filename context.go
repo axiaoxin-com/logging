@@ -27,7 +27,6 @@ func CtxLogger(c context.Context, fields ...zap.Field) *zap.Logger {
 	if c == nil {
 		c = context.Background()
 	}
-	var ctxLogger *zap.Logger
 	var ctxLoggerItf interface{}
 	if gc, ok := c.(*gin.Context); ok {
 		ctxLoggerItf, _ = gc.Get(string(CtxLoggerName))
@@ -35,16 +34,12 @@ func CtxLogger(c context.Context, fields ...zap.Field) *zap.Logger {
 		ctxLoggerItf = c.Value(CtxLoggerName)
 	}
 
+	var ctxLogger *zap.Logger
 	if ctxLoggerItf != nil {
 		ctxLogger = ctxLoggerItf.(*zap.Logger)
 	} else {
-		ctxLogger = CloneLogger(string(CtxLoggerName))
+		_, ctxLogger = NewCtxLogger(c, CloneLogger(string(CtxLoggerName)), CtxTraceID(c))
 	}
-
-	// try to get trace id from ctx
-	traceID := CtxTraceID(c)
-	// then set trace id into ctxlogger
-	ctxLogger = ctxLogger.With(zap.String(string(TraceIDKeyname), traceID))
 
 	if len(fields) > 0 {
 		ctxLogger = ctxLogger.With(fields...)
@@ -73,20 +68,21 @@ func CtxTraceID(c context.Context) string {
 	return TraceIDPrefix + xid.New().String()
 }
 
-// Context set trace id and logger into context.Context and gin.Context
-func Context(c context.Context, logger *zap.Logger, traceID string) context.Context {
+// NewCtxLogger return a context with logger and trace id and a logger with trace id
+func NewCtxLogger(c context.Context, logger *zap.Logger, traceID string) (context.Context, *zap.Logger) {
 	if c == nil {
 		c = context.Background()
 	}
+	ctxLogger := logger.With(zap.String(string(TraceIDKeyname), traceID))
 	if gc, ok := c.(*gin.Context); ok {
 		// set ctxlogger in gin.Context
-		gc.Set(string(CtxLoggerName), logger)
+		gc.Set(string(CtxLoggerName), ctxLogger)
 		// set traceID in gin.Context
 		gc.Set(string(TraceIDKeyname), traceID)
 	}
 	// set ctxlogger in context.Context
-	c = context.WithValue(c, CtxLoggerName, logger)
+	c = context.WithValue(c, CtxLoggerName, ctxLogger)
 	// set traceID in context.Context
 	c = context.WithValue(c, TraceIDKeyname, traceID)
-	return c
+	return c, ctxLogger
 }

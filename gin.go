@@ -221,7 +221,7 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 		// 设置 trace id 到 response header 中
 		c.Writer.Header().Set(string(TraceIDKeyname), traceID)
 		// 设置 trace id 和 ctxLogger 到 context 中
-		Context(c, CloneLogger("gin"), traceID)
+		_, ctxLogger := NewCtxLogger(c, CloneLogger("gin"), traceID)
 
 		start := time.Now()
 
@@ -271,7 +271,7 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			details.Latency = details.Timestamp.Sub(start).Seconds()
 
 			// 创建 logger
-			accessLogger := CtxLogger(c).Named("access_logger").With(
+			accessLogger := ctxLogger.Named("access_logger").With(
 				zap.String("client_ip", details.ClientIP),
 				zap.String("method", details.Method),
 				zap.String("path", details.Path),
