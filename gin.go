@@ -245,8 +245,9 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 
 		// 获取并保存原始请求 body
 		if conf.EnableRequestBody {
-			if err := jsoniter.Unmarshal(GetGinRequestBody(c), &details.RequestBody); err != nil {
-				details.RequestBody = string(GetGinRequestBody(c))
+			body := GetGinRequestBody(c)
+			if err := jsoniter.Unmarshal(body, &details.RequestBody); err != nil {
+				details.RequestBody = string(body)
 			}
 		}
 		// 获取并保存原始请求 form
