@@ -124,6 +124,8 @@ type GinLoggerConfig struct {
 	// TraceIDFunc 获取或生成 trace id 的函数
 	// Optional.
 	TraceIDFunc func(*gin.Context) string
+	// InitFieldsFunc 获取 logger 初始字段方法 key 为字段名 value 为字段值
+	InitFieldsFunc func(*gin.Context) map[string]interface{}
 	// 是否使用详细模式打印日志，记录更多字段信息
 	// Optional.
 	EnableDetails bool
@@ -221,7 +223,13 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 		// 设置 trace id 到 response header 中
 		c.Writer.Header().Set(string(TraceIDKeyname), traceID)
 		// 设置 trace id 和 ctxLogger 到 context 中
-		_, ctxLogger := NewCtxLogger(c, CloneLogger("gin"), traceID)
+		ginLogger := CloneLogger("gin")
+		if conf.InitFieldsFunc != nil {
+			for k, v := range conf.InitFieldsFunc(c) {
+				ginLogger = ginLogger.With(zap.Any(k, v))
+			}
+		}
+		_, ctxLogger := NewCtxLogger(c, ginLogger, traceID)
 
 		start := time.Now()
 
