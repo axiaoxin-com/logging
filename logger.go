@@ -17,7 +17,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"reflect"
 	"strings"
 	"sync"
 	"syscall"
@@ -43,8 +42,8 @@ var (
 	loggerName = "logging"
 	// atomicLevel 默认 logger atomic level 级别默认为 debug
 	atomicLevel = zap.NewAtomicLevelAt(zap.DebugLevel)
-	// encoderConfig 默认的日志字段名配置
-	encoderConfig = zapcore.EncoderConfig{
+	// EncoderConfig 默认的日志字段名配置
+	EncoderConfig = zapcore.EncoderConfig{
 		TimeKey:        "time",
 		LevelKey:       "level",
 		NameKey:        "logger",
@@ -90,7 +89,7 @@ type Options struct {
 	DisableCaller     bool                    // 是否关闭打印 caller
 	DisableStacktrace bool                    // 是否关闭打印 stackstrace
 	SentryClient      *sentry.Client          // sentry 客户端
-	EncoderConfig     zapcore.EncoderConfig   // 配置日志字段 key 的名称
+	EncoderConfig     *zapcore.EncoderConfig  // 配置日志字段 key 的名称
 	LumberjackSink    *LumberjackSink         // lumberjack sink 支持日志文件 rotate
 	AtomicLevelServer AtomicLevelServerOption // AtomicLevel server 相关配置
 }
@@ -132,7 +131,7 @@ func init() {
 		AtomicLevelServer: AtomicLevelServerOption{
 			Addr: os.Getenv(AtomicLevelAddrEnvKey),
 		},
-		EncoderConfig:  encoderConfig,
+		EncoderConfig:  &EncoderConfig,
 		LumberjackSink: nil,
 	}
 	logger, err = NewLogger(options)
@@ -180,10 +179,10 @@ func NewLogger(options Options) (*zap.Logger, error) {
 	cfg.DisableStacktrace = options.DisableStacktrace
 
 	// 设置 encoderConfig
-	if reflect.DeepEqual(options.EncoderConfig, zapcore.EncoderConfig{}) {
-		cfg.EncoderConfig = encoderConfig
+	if options.EncoderConfig == nil {
+		cfg.EncoderConfig = EncoderConfig
 	} else {
-		cfg.EncoderConfig = options.EncoderConfig
+		cfg.EncoderConfig = *options.EncoderConfig
 	}
 
 	// Sampling 实现了日志的流控功能，或者叫采样配置，主要有两个配置参数， Initial 和 Thereafter ，实现的效果是在 1s 的时间单位内，如果某个日志级别下同样内容的日志输出数量超过了 Initial 的数量，那么超过之后，每隔 Thereafter 的数量，才会再输出一次。是一个对日志输出的保护功能。
