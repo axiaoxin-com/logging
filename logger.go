@@ -68,7 +68,7 @@ var (
 		"panic":  zap.NewAtomicLevelAt(zap.PanicLevel),
 		"fatal":  zap.NewAtomicLevelAt(zap.FatalLevel),
 	}
-	// 互斥锁
+	// 读写锁
 	rwMutex sync.RWMutex
 )
 
