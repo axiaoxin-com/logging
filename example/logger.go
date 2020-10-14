@@ -41,7 +41,7 @@ func main() {
 		DisableCaller:     false,              // 是否打印调用的代码行位置
 		DisableStacktrace: false,              // 错误日志是否打印调用栈信息
 		SentryClient:      sentryClient,       // sentry 客户端
-		AtomicLevelServer: &logging.AtomicLevelServerOption{Addr: ":9999"},
+		AtomicLevelServer: logging.AtomicLevelServerOption{Addr: ":9999"},
 	}
 	optionsLogger, _ := logging.NewLogger(options)
 	optionsLogger.Debug("optionsLogger")

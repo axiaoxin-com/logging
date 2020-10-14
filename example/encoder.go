@@ -11,7 +11,7 @@ func main() {
 	/* custom logger encoder */
 	options := logging.Options{
 		Name: "apiserver",
-		EncoderConfig: zapcore.EncoderConfig{
+		EncoderConfig: &zapcore.EncoderConfig{
 			TimeKey:        "Time",
 			LevelKey:       "Level",
 			NameKey:        "Logger",

@@ -18,7 +18,7 @@ func main() {
 	options := logging.Options{
 		Format: "json",
 		Level:  "debug",
-		AtomicLevelServer: &logging.AtomicLevelServerOption{
+		AtomicLevelServer: logging.AtomicLevelServerOption{
 			Addr:     ":8999",
 			Path:     "/level",
 			Username: "admin",
