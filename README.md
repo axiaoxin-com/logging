@@ -79,7 +79,7 @@ logging 可以在代码中对 AtomicLevel 调用 SetLevel 动态修改日志级�
 
 ## 支持 Gorm 日志打印 Trace ID
 
-在每一次使用 gorm 进行 db 操作前，调用 GormDBWithCtxLogger 来设置替换 gorm DB 对象的默认 logger 并生成新的 DB 对象，之后使用新的 DB 对象来操作 gorm 即可。
+使用 gorm v2 支持 context logger 打印 trace id
 
 **示例 [example/gorm.go](example/gorm.go)**
 
