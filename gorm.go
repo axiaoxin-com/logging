@@ -5,6 +5,7 @@ package logging
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -70,6 +71,8 @@ func (g GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 	now := time.Now()
 	latency := now.Sub(begin).Seconds()
 	sql, rows := fc()
+	sql = strings.Replace(sql, "\t", " ", -1)
+	sql = strings.Replace(sql, "\n", " ", -1)
 	switch {
 	case err != nil:
 		CtxLogger(ctx).Error("gorm trace [error]", zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
