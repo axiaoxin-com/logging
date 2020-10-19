@@ -5,9 +5,9 @@ package logging
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
+	"github.com/axiaoxin-com/goutils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	gormlogger "gorm.io/gorm/logger"
@@ -71,15 +71,14 @@ func (g GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 	now := time.Now()
 	latency := now.Sub(begin).Seconds()
 	sql, rows := fc()
-	sql = strings.Replace(sql, "\t", " ", -1)
-	sql = strings.Replace(sql, "\n", " ", -1)
+	sql = goutils.RemoveDuplicateWhitespace(sql, true)
 	switch {
 	case err != nil:
-		CtxLogger(ctx).Error("gorm trace [error]", zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
+		CtxLogger(ctx).Error("gorm sql error trace", zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
 	case g.slowThreshold != 0 && latency > g.slowThreshold.Seconds():
-		CtxLogger(ctx).Warn("gorm trace [slow]", zap.String("threshold", fmt.Sprintf("%v", g.slowThreshold)), zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
+		CtxLogger(ctx).Warn("gorm sql slow trace", zap.String("threshold", fmt.Sprintf("%v", g.slowThreshold)), zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
 	case g.logLevel <= zap.InfoLevel:
-		CtxLogger(ctx).Info("gorm trace", zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
+		CtxLogger(ctx).Info("gorm sql trace", zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
 	}
 }
 
