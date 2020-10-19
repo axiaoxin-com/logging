@@ -84,7 +84,7 @@ func (g GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 
 // NewGormLogger 返回带 zap logger 的 GormLogger
 func NewGormLogger(logger *zap.Logger, logLevel zapcore.Level, slowThreshold time.Duration) GormLogger {
-	logger = logger.Named(GormLoggerName).WithOptions(zap.AddCallerSkip(7))
+	logger = logger.Named(GormLoggerName).WithOptions(zap.AddCallerSkip(8))
 	return GormLogger{
 		logger:        logger,
 		logLevel:      logLevel,
