@@ -48,21 +48,21 @@ func (g GormLogger) LogMode(gormLogLevel gormlogger.LogLevel) gormlogger.Interfa
 // Info 实现 gorm logger 接口方法
 func (g GormLogger) Info(ctx context.Context, msg string, data ...interface{}) {
 	if g.logLevel <= zap.InfoLevel {
-		CtxLogger(ctx).Info(msg, zap.Any("data", data))
+		CtxLogger(ctx).Sugar().Infof(msg, data...)
 	}
 }
 
 // Warn 实现 gorm logger 接口方法
 func (g GormLogger) Warn(ctx context.Context, msg string, data ...interface{}) {
 	if g.logLevel <= zap.WarnLevel {
-		CtxLogger(ctx).Warn(msg, zap.Any("data", data))
+		CtxLogger(ctx).Sugar().Warnf(msg, data...)
 	}
 }
 
 // Error 实现 gorm logger 接口方法
 func (g GormLogger) Error(ctx context.Context, msg string, data ...interface{}) {
 	if g.logLevel <= zap.ErrorLevel {
-		CtxLogger(ctx).Error(msg, zap.Any("data", data))
+		CtxLogger(ctx).Sugar().Errorf(msg, data...)
 	}
 }
 
