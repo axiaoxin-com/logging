@@ -19,7 +19,7 @@ var (
 	// TraceIDKeyname define the trace id keyname
 	TraceIDKeyname Ctxkey = "trace_id"
 	// TraceIDPrefix set the prefix when gen a trace id
-	TraceIDPrefix string = "logging_"
+	TraceIDPrefix = "logging_"
 )
 
 // CtxLogger get the ctxLogger in context
