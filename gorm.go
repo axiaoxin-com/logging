@@ -13,7 +13,7 @@ import (
 	gormlogger "gorm.io/gorm/logger"
 )
 
-const (
+var (
 	// GormLoggerName gorm logger 名称
 	GormLoggerName = "gorm"
 	// GormLoggerCallerSkip caller skip
