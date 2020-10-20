@@ -16,6 +16,8 @@ import (
 const (
 	// GormLoggerName gorm logger 名称
 	GormLoggerName = "gorm"
+	// GormLoggerCallerSkip caller skip
+	GormLoggerCallerSkip = 3
 )
 
 // GormLogger 使用 zap 来打印 gorm 的日志
@@ -44,9 +46,9 @@ func (g GormLogger) LogMode(gormLogLevel gormlogger.LogLevel) gormlogger.Interfa
 	return &newlogger
 }
 
-// 创建打印日志的 ctxlogger
+// CtxLogger 创建打印日志的 ctxlogger
 func (g GormLogger) CtxLogger(ctx context.Context) *zap.Logger {
-	return CtxLogger(ctx).Named(GormLoggerName).WithOptions(zap.AddCallerSkip(3))
+	return CtxLogger(ctx).Named(GormLoggerName).WithOptions(zap.AddCallerSkip(GormLoggerCallerSkip))
 }
 
 // Info 实现 gorm logger 接口方法
