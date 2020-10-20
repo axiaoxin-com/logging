@@ -41,10 +41,10 @@ func G(traceID string) {
 
 	// 模拟一个 ctx ，并将 logger 和 traceID 设置到 ctx 中
 	// 这里使用 Options 设置为打印 caller 字段
-	ctx, logger := logging.NewCtxLogger(context.Background(), logging.CloneLogger("gorm"), traceID)
+	ctx, _ := logging.NewCtxLogger(context.Background(), logging.CloneLogger("gorm"), traceID)
 
 	// 新建会话模式设置 logger，也可以在 Open 时 使用 Config 设置
-	db = db.Session(&gorm.Session{Logger: logging.NewGormLogger(logger, zap.InfoLevel, time.Millisecond*200)})
+	db = db.Session(&gorm.Session{Logger: logging.NewGormLogger(zap.InfoLevel, time.Millisecond*200)})
 
 	// 打印带 trace id 的 gorm 日志
 	// 必须先对 db 对象设置带有 trace id 的 ctxlogger 作为 sql 日志打印的 logger

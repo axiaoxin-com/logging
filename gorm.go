@@ -21,7 +21,6 @@ const (
 // GormLogger 使用 zap 来打印 gorm 的日志
 // 初始化时在内部的 logger 中添加 trace id 可以追踪 sql 执行记录
 type GormLogger struct {
-	logger *zap.Logger
 	// 日志级别
 	logLevel zapcore.Level
 	// 指定慢查询时间
@@ -45,24 +44,29 @@ func (g GormLogger) LogMode(gormLogLevel gormlogger.LogLevel) gormlogger.Interfa
 	return &newlogger
 }
 
+// 创建打印日志的 ctxlogger
+func (g GormLogger) CtxLogger(ctx context.Context) *zap.Logger {
+	return CtxLogger(ctx).Named(GormLoggerName).WithOptions(zap.AddCallerSkip(3))
+}
+
 // Info 实现 gorm logger 接口方法
 func (g GormLogger) Info(ctx context.Context, msg string, data ...interface{}) {
 	if g.logLevel <= zap.InfoLevel {
-		CtxLogger(ctx).Sugar().Infof(msg, data...)
+		g.CtxLogger(ctx).Sugar().Infof(msg, data...)
 	}
 }
 
 // Warn 实现 gorm logger 接口方法
 func (g GormLogger) Warn(ctx context.Context, msg string, data ...interface{}) {
 	if g.logLevel <= zap.WarnLevel {
-		CtxLogger(ctx).Sugar().Warnf(msg, data...)
+		g.CtxLogger(ctx).Sugar().Warnf(msg, data...)
 	}
 }
 
 // Error 实现 gorm logger 接口方法
 func (g GormLogger) Error(ctx context.Context, msg string, data ...interface{}) {
 	if g.logLevel <= zap.ErrorLevel {
-		CtxLogger(ctx).Sugar().Errorf(msg, data...)
+		g.CtxLogger(ctx).Sugar().Errorf(msg, data...)
 	}
 }
 
@@ -74,29 +78,17 @@ func (g GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 	sql = goutils.RemoveDuplicateWhitespace(sql, true)
 	switch {
 	case err != nil:
-		CtxLogger(ctx).Error("gorm sql error trace", zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
+		g.CtxLogger(ctx).Error("gorm sql error trace", zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
 	case g.slowThreshold != 0 && latency > g.slowThreshold.Seconds():
-		CtxLogger(ctx).Warn("gorm sql slow trace", zap.String("threshold", fmt.Sprintf("%v", g.slowThreshold)), zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
+		g.CtxLogger(ctx).Warn("gorm sql slow trace", zap.String("threshold", fmt.Sprintf("%v", g.slowThreshold)), zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
 	case g.logLevel <= zap.InfoLevel:
-		CtxLogger(ctx).Info("gorm sql trace", zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
+		g.CtxLogger(ctx).Info("gorm sql trace", zap.Float64("latency", latency), zap.String("sql", sql), zap.Int64("rows", rows))
 	}
 }
 
 // NewGormLogger 返回带 zap logger 的 GormLogger
-func NewGormLogger(logger *zap.Logger, logLevel zapcore.Level, slowThreshold time.Duration) GormLogger {
-	logger = logger.Named(GormLoggerName).WithOptions(zap.AddCallerSkip(8))
+func NewGormLogger(logLevel zapcore.Level, slowThreshold time.Duration) GormLogger {
 	return GormLogger{
-		logger:        logger,
-		logLevel:      logLevel,
-		slowThreshold: slowThreshold,
-	}
-}
-
-// CtxGormLogger 从 context 中获取 zap logger 来创建 GormLogger
-func CtxGormLogger(c context.Context, logLevel zapcore.Level, slowThreshold time.Duration) GormLogger {
-	logger := CtxLogger(c).Named(GormLoggerName).WithOptions(zap.AddCallerSkip(7))
-	return GormLogger{
-		logger:        logger,
 		logLevel:      logLevel,
 		slowThreshold: slowThreshold,
 	}
