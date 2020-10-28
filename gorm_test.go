@@ -8,7 +8,7 @@ import (
 )
 
 func TestCtxGormLogger(t *testing.T) {
-	logger := CtxGormLogger(nil, zapcore.InfoLevel, 5*time.Second)
+	logger := NewGormLogger(zapcore.InfoLevel, 5*time.Second)
 	if logger == (GormLogger{}) {
 		t.Error("CtxGormLogger return empty GormLogger")
 	}
