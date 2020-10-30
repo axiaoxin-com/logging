@@ -47,6 +47,9 @@ var (
 			Help:      "gin server request latency in seconds",
 		}, promGinLabels,
 	)
+
+	// 默认慢请求时间 3s
+	defaultGinSlowThreshold = time.Second * 3
 )
 
 // GetGinTraceIDFromHeader 从 gin 的 request header 中获取 key 为 TraceIDKeyname 的值作为 traceid
@@ -147,6 +150,9 @@ type GinLoggerConfig struct {
 	// 是否打印响应体信息
 	// Optional.
 	EnableResponseBody bool
+
+	// 慢请求时间阈值 请求处理时间超过该值则使用 Error 级别打印日志
+	SlowThreshold time.Duration
 }
 
 // GinLogger 以默认配置生成 gin 的 Logger 中间件
@@ -214,6 +220,10 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 		} else {
 			skipRegexps = append(skipRegexps, r)
 		}
+	}
+
+	if conf.SlowThreshold.Seconds() <= 0 {
+		conf.SlowThreshold = defaultGinSlowThreshold
 	}
 
 	return func(c *gin.Context) {
@@ -368,6 +378,10 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			} else if len(c.Errors) > 0 {
 				log = logger.Error
 			}
+			// 慢请求使用 Error 记录
+			if details.Latency > conf.SlowThreshold.Seconds() {
+				log = logger.Error
+			}
 
 			skipLog := false
 			if _, exists := skip[details.Path]; exists {
@@ -380,7 +394,6 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 					}
 				}
 			}
-
 			if !skipLog {
 				log(formatter(details))
 
