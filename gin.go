@@ -378,10 +378,6 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			} else if len(c.Errors) > 0 {
 				log = logger.Error
 			}
-			// 慢请求使用 Error 记录
-			if details.Latency > conf.SlowThreshold.Seconds() {
-				log = logger.Error
-			}
 
 			skipLog := false
 			if _, exists := skip[details.Path]; exists {
@@ -395,7 +391,12 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 				}
 			}
 			if !skipLog {
-				log(formatter(details))
+				// 慢请求使用 Error 记录
+				if details.Latency > conf.SlowThreshold.Seconds() {
+					logger.Error("SlowThreshold Error:"+formatter(details), zap.Float64("SlowThreshold", conf.SlowThreshold.Seconds()))
+				} else {
+					log(formatter(details))
+				}
 
 				// update prometheus info
 				labels := []string{fmt.Sprint(details.StatusCode), details.Path, details.Method}
