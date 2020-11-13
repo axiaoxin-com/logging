@@ -2,6 +2,7 @@ package logging
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -126,9 +127,9 @@ type GinLoggerConfig struct {
 	SkipPathRegexps []string
 	// TraceIDFunc 获取或生成 trace id 的函数
 	// Optional.
-	TraceIDFunc func(*gin.Context) string
+	TraceIDFunc func(context.Context) string
 	// InitFieldsFunc 获取 logger 初始字段方法 key 为字段名 value 为字段值
-	InitFieldsFunc func(*gin.Context) map[string]interface{}
+	InitFieldsFunc func(context.Context) map[string]interface{}
 	// 是否使用详细模式打印日志，记录更多字段信息
 	// Optional.
 	EnableDetails bool
@@ -175,18 +176,25 @@ func defaultGinLogFormatter(m GinLogDetails) string {
 	return msg
 }
 
-func defaultGinTraceIDFunc(c *gin.Context) (traceID string) {
-	traceID = GetGinTraceIDFromHeader(c)
-	if traceID != "" {
-		return
+func defaultGinTraceIDFunc(c context.Context) (traceID string) {
+	if c == nil {
+		c = context.Background()
 	}
-	traceID = GetGinTraceIDFromPostForm(c)
-	if traceID != "" {
-		return
-	}
-	traceID = GetGinTraceIDFromQueryString(c)
-	if traceID != "" {
-		return
+
+	if gc, ok := c.(*gin.Context); ok {
+
+		traceID = GetGinTraceIDFromHeader(gc)
+		if traceID != "" {
+			return
+		}
+		traceID = GetGinTraceIDFromPostForm(gc)
+		if traceID != "" {
+			return
+		}
+		traceID = GetGinTraceIDFromQueryString(gc)
+		if traceID != "" {
+			return
+		}
 	}
 	traceID = CtxTraceID(c)
 	return

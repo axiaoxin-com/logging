@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/axiaoxin-com/logging"
@@ -18,7 +19,7 @@ func main() {
 		},
 		SkipPaths:     []string{},
 		EnableDetails: false,
-		TraceIDFunc:   func(c *gin.Context) string { return "fake-uuid" },
+		TraceIDFunc:   func(context.Context) string { return "fake-uuid" },
 	}
 	app.Use(logging.GinLoggerWithConfig(conf))
 	app.POST("/ping", func(c *gin.Context) {

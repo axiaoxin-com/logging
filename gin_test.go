@@ -2,6 +2,7 @@ package logging
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -42,7 +43,7 @@ func TestGinLoggerWithConfig(t *testing.T) {
 		EnableResponseBody:  true,
 		EnableRequestHeader: true,
 		Formatter:           func(m GinLogDetails) string { return fmt.Sprintln(m.StatusCode, m.RequestURI) },
-		TraceIDFunc:         func(c *gin.Context) string { return "xx-xx-xx-xx" },
+		TraceIDFunc:         func(context.Context) string { return "xx-xx-xx-xx" },
 		SkipPaths:           []string{},
 	}
 	app.Use(GinLoggerWithConfig(conf))
