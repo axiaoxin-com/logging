@@ -399,9 +399,9 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 				}
 			}
 			if !skipLog {
-				// 慢请求使用 Error 记录
+				// 慢请求使用 Warn 记录
 				if details.Latency > conf.SlowThreshold.Seconds() {
-					logger.Error(formatter(details)+" hit slow request.", zap.Float64("slow_threshold", conf.SlowThreshold.Seconds()))
+					logger.Warn(formatter(details)+" hit slow request.", zap.Float64("slow_threshold", conf.SlowThreshold.Seconds()))
 				} else {
 					log(formatter(details))
 				}
