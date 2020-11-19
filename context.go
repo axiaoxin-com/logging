@@ -6,6 +6,7 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/rs/xid"
 	"go.uber.org/zap"
 )
@@ -58,6 +59,13 @@ func CtxTraceID(c context.Context) string {
 		if traceID := gc.GetString(string(TraceIDKeyname)); traceID != "" {
 			return traceID
 		}
+		if traceID := gc.Query(string(TraceIDKeyname)); traceID != "" {
+			return traceID
+		}
+		if traceID := jsoniter.Get(GetGinRequestBody(gc), string(TraceIDKeyname)).ToString(); traceID != "" {
+			return traceID
+		}
+
 	}
 	// get from go context
 	traceIDItf := c.Value(TraceIDKeyname)
