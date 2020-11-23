@@ -2,6 +2,8 @@
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/axiaoxin-com/logging)](https://goreportcard.com/report/github.com/axiaoxin-com/logging)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/3f0bf6abb7504f2f8734f094bb65e0d6)](https://app.codacy.com/gh/axiaoxin-com/logging?utm_source=github.com&utm_medium=referral&utm_content=axiaoxin-com/logging&utm_campaign=Badge_Grade_Settings)
+[![Build Status](https://travis-ci.org/axiaoxin-com/logging.svg?branch=master)](https://travis-ci.org/axiaoxin-com/logging)
+
 
 logging 简单封装了在日常使用 [zap](https://github.com/uber-go/zap) 打日志时的常用方法。
 
