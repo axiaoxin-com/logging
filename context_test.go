@@ -35,6 +35,7 @@ func TestContext(t *testing.T) {
 
 func TestGinCtxLoggerEmpty(t *testing.T) {
 	c := &gin.Context{}
+	c.Request, _ = http.NewRequest("GET", "/", nil)
 
 	logger := CtxLogger(c)
 	if logger == nil {
