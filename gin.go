@@ -119,7 +119,7 @@ type GinLogDetails struct {
 // GinLoggerConfig GinLogger 支持的配置项字段定义
 type GinLoggerConfig struct {
 	// Optional. Default value is logging.defaultGinLogFormatter
-	Formatter func(GinLogDetails) string
+	Formatter func(context.Context, GinLogDetails) string
 	// SkipPaths is a url path array which logs are not written.
 	// Optional.
 	SkipPaths []string
@@ -162,7 +162,7 @@ func GinLogger() gin.HandlerFunc {
 }
 
 // gin 访问日志中 msg 字段的输出格式
-func defaultGinLogFormatter(m GinLogDetails) string {
+func defaultGinLogFormatter(c context.Context, m GinLogDetails) string {
 	_, shortHandlerName := path.Split(m.HandlerName)
 	msg := fmt.Sprintf("%s|%s|%s%s|%s|%d|%f",
 		m.ClientIP,
@@ -401,9 +401,9 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			if !skipLog {
 				// 慢请求使用 Warn 记录
 				if details.Latency > conf.SlowThreshold.Seconds() {
-					logger.Warn(formatter(details)+" hit slow request.", zap.Float64("slow_threshold", conf.SlowThreshold.Seconds()))
+					logger.Warn(formatter(c, details)+" hit slow request.", zap.Float64("slow_threshold", conf.SlowThreshold.Seconds()))
 				} else {
-					log(formatter(details))
+					log(formatter(c, details))
 				}
 
 				// update prometheus info

@@ -42,7 +42,7 @@ func TestGinLoggerWithConfig(t *testing.T) {
 		EnableRequestForm:   true,
 		EnableResponseBody:  true,
 		EnableRequestHeader: true,
-		Formatter:           func(m GinLogDetails) string { return fmt.Sprintln(m.StatusCode, m.RequestURI) },
+		Formatter:           func(c context.Context, m GinLogDetails) string { return fmt.Sprintln(m.StatusCode, m.RequestURI) },
 		TraceIDFunc:         func(context.Context) string { return "xx-xx-xx-xx" },
 		SkipPaths:           []string{},
 	}
