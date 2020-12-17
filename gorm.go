@@ -26,6 +26,8 @@ type GormLogger struct {
 	logLevel zapcore.Level
 	// 指定慢查询时间
 	slowThreshold time.Duration
+	// Trace 方法打印日志是使用的日志 level
+	traceWithLevel zapcore.Level
 }
 
 var gormLogLevelMap = map[gormlogger.LogLevel]zapcore.Level{
@@ -77,20 +79,30 @@ func (g GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 	latency := now.Sub(begin).Seconds()
 	sql, rows := fc()
 	sql = goutils.RemoveDuplicateWhitespace(sql, true)
+	logger := g.CtxLogger(ctx)
 	switch {
 	case err != nil:
-		g.CtxLogger(ctx).Error("sql: "+sql, zap.Float64("latency", latency), zap.Int64("rows", rows), zap.String("error", err.Error()))
+		logger.Error("sql: "+sql, zap.Float64("latency", latency), zap.Int64("rows", rows), zap.String("error", err.Error()))
 	case g.slowThreshold != 0 && latency > g.slowThreshold.Seconds():
-		g.CtxLogger(ctx).Warn("sql: "+sql, zap.Float64("latency", latency), zap.Int64("rows", rows), zap.Float64("threshold", g.slowThreshold.Seconds()))
-	case g.logLevel <= zap.InfoLevel:
-		g.CtxLogger(ctx).Info("sql: "+sql, zap.Float64("latency", latency), zap.Int64("rows", rows))
+		logger.Warn("sql: "+sql, zap.Float64("latency", latency), zap.Int64("rows", rows), zap.Float64("threshold", g.slowThreshold.Seconds()))
+	default:
+		log := logger.Debug
+		if g.traceWithLevel == zap.InfoLevel {
+			log = logger.Info
+		} else if g.traceWithLevel == zap.WarnLevel {
+			log = logger.Warn
+		} else if g.traceWithLevel == zap.ErrorLevel {
+			log = logger.Error
+		}
+		log("sql: "+sql, zap.Float64("latency", latency), zap.Int64("rows", rows))
 	}
 }
 
 // NewGormLogger 返回带 zap logger 的 GormLogger
-func NewGormLogger(logLevel zapcore.Level, slowThreshold time.Duration) GormLogger {
+func NewGormLogger(logLevel zapcore.Level, traceWithLevel zapcore.Level, slowThreshold time.Duration) GormLogger {
 	return GormLogger{
-		logLevel:      logLevel,
-		slowThreshold: slowThreshold,
+		logLevel:       logLevel,
+		slowThreshold:  slowThreshold,
+		traceWithLevel: traceWithLevel,
 	}
 }
