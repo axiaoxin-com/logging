@@ -14,7 +14,7 @@ import (
 	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.uber.org/zap"
 )
 
@@ -27,21 +27,14 @@ var (
 		"path",
 		"method",
 	}
-	promGinUptime = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: promNamespace,
-			Name:      "server_uptime",
-			Help:      "gin server uptime in seconds",
-		}, nil,
-	)
-	promGinReqCount = prometheus.NewCounterVec(
+	promGinReqCount = promauto.NewCounterVec(
 		prometheus.CounterOpts{
 			Namespace: promNamespace,
 			Name:      "req_count",
 			Help:      "gin server request count",
 		}, promGinLabels,
 	)
-	promGinReqLatency = prometheus.NewHistogramVec(
+	promGinReqLatency = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Namespace: promNamespace,
 			Name:      "req_latency",
@@ -401,7 +394,10 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			if !skipLog {
 				// 慢请求使用 Warn 记录
 				if details.Latency > conf.SlowThreshold.Seconds() {
-					logger.Warn(formatter(c, details)+" hit slow request.", zap.Float64("slow_threshold", conf.SlowThreshold.Seconds()))
+					logger.Warn(
+						formatter(c, details)+" hit slow request.",
+						zap.Float64("slow_threshold", conf.SlowThreshold.Seconds()),
+					)
 				} else {
 					log(formatter(c, details))
 				}
@@ -444,30 +440,4 @@ type responseBodyWriter struct {
 func (w responseBodyWriter) Write(b []byte) (int, error) {
 	w.body.Write(b)
 	return w.ResponseWriter.Write(b)
-}
-
-// WrapGinPromExporter return a handler as the prometheus metrics exporter
-// not a middleware
-func WrapGinPromExporter(collectors ...prometheus.Collector) gin.HandlerFunc {
-	if err := prometheus.Register(promGinUptime); err != nil {
-		Error(nil, "Register prometheus gin uptime error:"+err.Error())
-	}
-	if err := prometheus.Register(promGinReqCount); err != nil {
-		Error(nil, "Register prometheus gin request count error:"+err.Error())
-	}
-	if err := prometheus.Register(promGinReqLatency); err != nil {
-		Error(nil, "Register prometheus gin request latency error:"+err.Error())
-	}
-	for _, collector := range collectors {
-		if err := prometheus.Register(collector); err != nil {
-			Error(nil, "Register collector error:"+err.Error())
-		}
-	}
-	// uptime
-	go func() {
-		for range time.Tick(time.Second) {
-			promGinUptime.WithLabelValues().Inc()
-		}
-	}()
-	return gin.WrapH(promhttp.Handler())
 }
