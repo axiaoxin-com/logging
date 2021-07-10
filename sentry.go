@@ -3,6 +3,7 @@
 package logging
 
 import (
+	"errors"
 	"fmt"
 	"syscall"
 	"time"
@@ -158,6 +159,9 @@ func NewSentryCore(cfg SentryCoreConfig, sentryClient *sentry.Client) zapcore.Co
 
 // NewSentryClient return sentry client by sentrydsn
 func NewSentryClient(dsn string, debug bool) (*sentry.Client, error) {
+	if dsn == "" {
+		return nil, errors.New("no dsn")
+	}
 	options := sentry.ClientOptions{
 		Dsn:              dsn,
 		Debug:            debug,

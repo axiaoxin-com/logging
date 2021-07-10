@@ -350,7 +350,7 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 
 			// 打印访问日志，根据状态码确定日志打印级别
 			log := logger.Info
-			if details.StatusCode >= http.StatusInternalServerError {
+			if details.StatusCode >= http.StatusInternalServerError || len(c.Errors) > 0 {
 				// 500+ 始终打印带 details 的 error 级别日志
 				errLogger := detailsLogger.Named("err")
 				// 无视配置开关，打印全部能搜集的信息
@@ -371,13 +371,8 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 				}
 				log = errLogger.Error
 			} else if details.StatusCode >= http.StatusBadRequest {
-				// 400+ 默认使用 warn 级别。如果有 errors 则使用 error 级别
+				// 400+ 默认使用 warn 级别
 				log = logger.Warn
-				if len(c.Errors) > 0 {
-					log = logger.Error
-				}
-			} else if len(c.Errors) > 0 {
-				log = logger.Error
 			}
 
 			skipLog := false
