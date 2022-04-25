@@ -24,6 +24,7 @@ func main() {
 	app.Use(logging.GinLoggerWithConfig(conf))
 	app.POST("/ping", func(c *gin.Context) {
 		// panic("xx")
+		// time.Sleep(300 * time.Millisecond)
 		c.JSON(200, string(logging.GetGinRequestBody(c)))
 	})
 	app.Run(":8888")
