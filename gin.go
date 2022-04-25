@@ -96,7 +96,7 @@ type GinLogDetails struct {
 	// 响应 body 字节数
 	BodySize int `json:"body_size"`
 	// 请求处理耗时 (秒)
-	Latency float64 `json:"latency"`
+	Latency float64 `json:"latency_seconds"`
 	// Context 中的 Keys
 	ContextKeys map[string]interface{} `json:"context_keys,omitempty"`
 	// http request header
@@ -297,7 +297,7 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 				zap.String("path", details.Path),
 				zap.String("host", details.Host),
 				zap.Int("status_code", details.StatusCode),
-				zap.Float64("latency", details.Latency),
+				zap.Float64("latency_seconds", details.Latency),
 			)
 			// handler 中使用 c.Error(err) 后，会打印到 context_errors 字段中
 			if len(c.Errors) > 0 {
