@@ -63,8 +63,8 @@ func GetGinTraceIDFromPostForm(c *gin.Context) string {
 
 // GinLogDetails gin 日志中间件记录的信息
 type GinLogDetails struct {
-	// 请求处理完成时间
-	Timestamp time.Time `json:"timestamp"`
+	// 接收到请求的时间
+	ReqTime time.Time `json:"req_time"`
 	// 请求方法
 	Method string `json:"method"`
 	// 请求 Path
@@ -228,6 +228,8 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		start := time.Now()
+
 		traceID := getTraceID(c)
 		// 设置 trace id 到 request header 中
 		c.Request.Header.Set(string(TraceIDKeyname), traceID)
@@ -242,10 +244,9 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 		}
 		_, ctxLogger := NewCtxLogger(c, ginLogger, traceID)
 
-		start := time.Now()
-
 		// 获取请求信息
 		details := GinLogDetails{
+			ReqTime:       start,
 			Method:        c.Request.Method,
 			Path:          c.Request.URL.Path,
 			Query:         c.Request.URL.RawQuery,
@@ -287,11 +288,11 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 			// 获取响应信息
 			details.StatusCode = c.Writer.Status()
 			details.BodySize = c.Writer.Size()
-			details.Timestamp = time.Now()
-			details.Latency = details.Timestamp.Sub(start).Seconds()
+			details.Latency = time.Since(start).Seconds()
 
 			// 创建 logger
 			accessLogger := ctxLogger.Named("access_logger").With(
+				zap.Time("req_time", details.ReqTime),
 				zap.String("client_ip", details.ClientIP),
 				zap.String("method", details.Method),
 				zap.String("path", details.Path),
