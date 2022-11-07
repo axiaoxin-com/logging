@@ -35,7 +35,7 @@ logging 提供的开箱即用方法都是使用自身默认 logger 克隆出的 
 
 开箱即用的方法第一个参数为 context.Context, 可以传入 gin.Context ，会尝试从其中获取 Trace ID 进行日志打印，无需 Trace ID 可以直接传 nil
 
-**示例 [example/logging.go](example/logging.go)**
+**示例 [example/logging.go](_example/logging.go)**
 
 全局开箱即用的方法默认不支持 sentry 自动上报 Error 级别的事件，有两种方式可以使其支持：
 
@@ -43,22 +43,22 @@ logging 提供的开箱即用方法都是使用自身默认 logger 克隆出的 
 
 2. 也可以通过替换默认 logger 来实现让全局方法支持 Error 以上级别自动上报。
 
-**示例 [example/replace.go](example/replace.go)**
+**示例 [example/replace.go](_example/replace.go)**
 
 ## 快速获取、创建你的 Logger
 
 logging 提供多种方式快速获取一个 logger 来打印日志
 
-**示例 [example/logger.go](example/logger.go)**
+**示例 [example/logger.go](_example/logger.go)**
 
 ## 带 Trace ID 的 CtxLogger
 
 每一次函数或者 gin 的 http 接口调用，在最顶层入口处都将一个带有唯一 trace id 的 logger 放入 context.Context 或 gin.Context ，
 后续函数在内部打印日志时从 Context 中获取带有本次调用 trace id 的 logger 来打印日志几个进行调用链路跟踪。
 
-**示例 1 普通函数中打印打印带 Trace ID 的日志 [example/context.go](example/context.go)**
+**示例 1 普通函数中打印打印带 Trace ID 的日志 [example/context.go](_example/context.go)**
 
-**示例 2 gin 中打印带 Trace ID 的日志 [example/gin.go](example/gintraceid.go)**:
+**示例 2 gin 中打印带 Trace ID 的日志 [example/gin.go](_example/gintraceid.go)**:
 
 ## 动态修改 logger 日志级别
 
@@ -66,23 +66,23 @@ logging 可以在代码中对 AtomicLevel 调用 SetLevel 动态修改日志级�
 创建 logger 时可自定义端口运行 HTTP 服务来接收请求修改日志级别。实际使用中日志级别通常写在配置文件中，
 可以通过监听配置文件的修改来动态调用 SetLevel 方法。
 
-**示例 [example/atomiclevel.go](example/atomiclevel.go)**
+**示例 [example/atomiclevel.go](_example/atomiclevel.go)**
 
 ## 自定义 logger Encoder 配置
 
-**示例 [example/encoder.go](example/encoder.go)**
+**示例 [example/encoder.go](_example/encoder.go)**
 
 ## 日志保存到文件并自动 rotate
 
 使用 lumberjack 将日志保存到文件并 rotate ，采用 zap 的 RegisterSink 方法和 Config.OutputPaths 字段添加自定义的日志输出的方式来使用 lumberjack 。
 
-**示例 [example/lumberjack.go](example/lumberjack.go)**
+**示例 [example/lumberjack.go](_example/lumberjack.go)**
 
 ## 支持 Gorm 日志打印 Trace ID
 
 使用 gorm v2 支持 context logger 打印 trace id
 
-**示例 [example/gorm.go](example/gorm.go)**
+**示例 [example/gorm.go](_example/gorm.go)**
 
 ## gin middleware: GinLogger
 
@@ -91,4 +91,4 @@ and supports automatic reporting of log events above error level to sentry
 
 相关文章： <https://github.com/axiaoxin/axiaoxin/issues/17>
 
-示例： [example/ginlogger.go](./example/ginlogger.go)
+示例： [example/ginlogger.go](_example/ginlogger.go)
