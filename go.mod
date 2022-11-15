@@ -3,7 +3,7 @@ module github.com/axiaoxin-com/logging
 go 1.16
 
 require (
-	github.com/axiaoxin-com/goutils v1.0.22
+	github.com/axiaoxin-com/goutils v1.0.35
 	github.com/getsentry/sentry-go v0.13.0
 	github.com/gin-gonic/gin v1.7.7
 	github.com/json-iterator/go v1.1.12
