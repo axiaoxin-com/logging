@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/axiaoxin-com/goutils v1.0.35
 	github.com/getsentry/sentry-go v0.13.0
-	github.com/gin-gonic/gin v1.7.7
+	github.com/gin-gonic/gin v1.9.1
 	github.com/json-iterator/go v1.1.12
 	github.com/natefinch/lumberjack v2.0.0+incompatible
 	github.com/prometheus/client_golang v1.12.1
