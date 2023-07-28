@@ -84,10 +84,6 @@ type Options struct {
 }
 
 const (
-	// SentryDSNEnvKey 引入包时默认创建 logger 将尝试从该环境变量名中获取 sentry dsn
-	SentryDSNEnvKey = "SENTRY_DSN"
-	// SentryDebugEnvKey 尝试从该环境变量中获取 sentry 是否开启 debug 模式
-	SentryDebugEnvKey = "SENTRY_DEBUG"
 	// AtomicLevelAddrEnvKey 初始化时尝试获取该环境变量用于设置动态修改日志级别的 http 服务运行地址
 	AtomicLevelAddrEnvKey = "ATOMIC_LEVEL_ADDR"
 )
@@ -95,18 +91,6 @@ const (
 // init the global logger
 func init() {
 	var err error
-	// 尝试从环境变量获取 sentry dsn
-	if dsn := os.Getenv(SentryDSNEnvKey); dsn != "" {
-		debugStr := os.Getenv(SentryDebugEnvKey)
-		debug := false
-		if strings.ToLower(debugStr) != "" {
-			debug = true
-		}
-		sentryClient, err = NewSentryClient(dsn, debug)
-		if err != nil {
-			log.Println(err)
-		}
-	}
 
 	options := Options{
 		Name:              loggerName,
