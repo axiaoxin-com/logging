@@ -3,7 +3,6 @@
 package logging
 
 import (
-	"errors"
 	"fmt"
 	"syscall"
 	"time"
@@ -141,7 +140,6 @@ func (c *sentryCore) Sync() error {
 
 // NewSentryCore new a sentry core
 func NewSentryCore(cfg SentryCoreConfig, sentryClient *sentry.Client) zapcore.Core {
-
 	core := sentryCore{
 		client:       sentryClient,
 		cfg:          &cfg,
@@ -158,25 +156,7 @@ func NewSentryCore(cfg SentryCoreConfig, sentryClient *sentry.Client) zapcore.Co
 }
 
 // NewSentryClient return sentry client by sentrydsn
-func NewSentryClient(dsn string, debug bool) (*sentry.Client, error) {
-	if dsn == "" {
-		return nil, errors.New("no dsn")
-	}
-	options := sentry.ClientOptions{
-		Dsn:              dsn,
-		Debug:            debug,
-		AttachStacktrace: true,
-		BeforeSend: func(event *sentry.Event, hint *sentry.EventHint) *sentry.Event {
-			if hint.Context != nil {
-				/*
-					if req, ok := hint.Context.Value(sentry.RequestContextKey).(*http.Request); ok {
-						// You have access to the original Request
-					}
-				*/
-			}
-			return event
-		},
-	}
+func NewSentryClient(options sentry.ClientOptions) (*sentry.Client, error) {
 	client, err := sentry.NewClient(options)
 	if err != nil {
 		return nil, err
