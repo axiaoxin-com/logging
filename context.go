@@ -65,7 +65,6 @@ func CtxTraceID(c context.Context) string {
 		if traceID := jsoniter.Get(GetGinRequestBody(gc), string(TraceIDKeyname)).ToString(); traceID != "" {
 			return traceID
 		}
-
 	}
 	// get from go context
 	traceIDItf := c.Value(TraceIDKeyname)

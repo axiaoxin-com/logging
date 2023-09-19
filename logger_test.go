@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/getsentry/sentry-go"
 	"go.uber.org/zap"
 )
 
@@ -28,8 +29,7 @@ func TestNewLoggerNoParam(t *testing.T) {
 }
 
 func TestNewLogger(t *testing.T) {
-	dsn := "sentrydsn"
-	sc, err := NewSentryClient(dsn, true)
+	sc, err := NewSentryClient(sentry.ClientOptions{})
 	if err != nil {
 		// t.Error("TestNewLogger NewSentryClient err", err)
 	}
@@ -81,7 +81,6 @@ func TestNewLogger(t *testing.T) {
 	t.Log("current level:", string(content))
 
 	logger.Debug("TestChangeLevel raw debug level should not be logged")
-
 }
 
 func TestCloneLogger(t *testing.T) {
@@ -109,5 +108,4 @@ func TestTextLevel(t *testing.T) {
 	if level != "debug" {
 		t.Error(level)
 	}
-
 }
