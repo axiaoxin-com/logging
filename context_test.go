@@ -34,7 +34,7 @@ func TestContext(t *testing.T) {
 }
 
 func TestGinCtxLoggerEmpty(t *testing.T) {
-	c := &gin.Context{}
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	c.Request, _ = http.NewRequest("GET", "/", nil)
 
 	logger := CtxLogger(c)
@@ -65,7 +65,7 @@ func TestCtxLoggerEmptyField(t *testing.T) {
 }
 
 func TestGinCtxLoggerDefaultLogger(t *testing.T) {
-	c := &gin.Context{}
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 
 	NewCtxLogger(c, CloneLogger("test"), "rid")
 	logger := CtxLogger(c)
@@ -76,7 +76,7 @@ func TestGinCtxLoggerDefaultLogger(t *testing.T) {
 }
 
 func TestGinCtxLoggerDefaultLoggerWithField(t *testing.T) {
-	ginctx := &gin.Context{}
+	ginctx, _ := gin.CreateTestContext(httptest.NewRecorder())
 
 	NewCtxLogger(ginctx, CloneLogger("test"), "rid")
 	ginCtxlogger := CtxLogger(ginctx, zap.String("myfield", "xxx"))
@@ -108,7 +108,7 @@ func TestCtxLoggerDefaultLoggerWithField(t *testing.T) {
 }
 
 func TestGinCtxTraceID(t *testing.T) {
-	c := &gin.Context{}
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	c.Request, _ = http.NewRequest("GET", "/", nil)
 	if CtxTraceID(c) == "" {
 		t.Fatal("context should return default value")
