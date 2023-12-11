@@ -399,7 +399,7 @@ func GinLoggerWithConfig(conf GinLoggerConfig) gin.HandlerFunc {
 				}
 
 				// update prometheus info
-				labels := []string{fmt.Sprint(details.StatusCode), details.Path, details.Method}
+				labels := []string{fmt.Sprint(details.StatusCode), url.PathEscape(details.Path), details.Method}
 				promGinReqCount.WithLabelValues(labels...).Inc()
 				promGinReqLatency.WithLabelValues(labels...).Observe(details.Latency)
 			}
