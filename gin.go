@@ -167,20 +167,20 @@ func defaultGinLogFormatter(c context.Context, m GinLogDetails) string {
 		m.Latency,
 	)
 
+	errmsg := ""
+	if m.StatusCode >= 400 {
+		errmsg = fmt.Sprint("HTTP", m.StatusCode)
+	}
 	if c == nil {
 		c = context.Background()
 	}
 	if gc, ok := c.(*gin.Context); ok {
-		errmsg := ""
-		if m.StatusCode >= 400 {
-			errmsg = fmt.Sprint("HTTP", m.StatusCode)
-		}
 		if len(gc.Errors) > 0 {
 			errmsg += gc.Errors.String()
 		}
-		if errmsg != "" {
-			msg = errmsg
-		}
+	}
+	if errmsg != "" {
+		msg = errmsg
 	}
 	return msg
 }
