@@ -169,7 +169,7 @@ func defaultGinLogFormatter(c context.Context, m GinLogDetails) string {
 
 	errmsg := ""
 	if m.StatusCode >= 400 {
-		errmsg = fmt.Sprint("HTTP", m.StatusCode)
+		errmsg = fmt.Sprintf("HTTP %v: %v ", m.StatusCode, m.RequestURI)
 	}
 	if c == nil {
 		c = context.Background()
