@@ -33,7 +33,10 @@ func CtxLogger(c context.Context, fields ...zap.Field) *zap.Logger {
 		ctxLoggerItf, _ = gc.Get(string(CtxLoggerName))
 		// 默认添加client ip
 		if len(fields) == 0 {
-			fields = append(fields, zap.String("ClientIP", gc.ClientIP()))
+			fields = append(fields,
+				zap.String("ClientIP", gc.ClientIP()),
+				zap.String("RequestURI", gc.Request.RequestURI),
+			)
 		}
 	} else {
 		ctxLoggerItf = c.Value(CtxLoggerName)
