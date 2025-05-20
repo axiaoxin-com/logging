@@ -166,6 +166,15 @@ func defaultGinLogFormatter(c context.Context, m GinLogDetails) string {
 		m.StatusCode,
 		m.Latency,
 	)
+
+	if c == nil {
+		c = context.Background()
+	}
+	if gc, ok := c.(*gin.Context); ok {
+		if len(gc.Errors) > 0 {
+			msg = gc.Errors.String()
+		}
+	}
 	return msg
 }
 
