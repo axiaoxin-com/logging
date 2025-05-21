@@ -4,6 +4,7 @@ package logging
 
 import (
 	"context"
+	"log"
 
 	"github.com/gin-gonic/gin"
 	jsoniter "github.com/json-iterator/go"
@@ -31,9 +32,9 @@ func CtxLogger(c context.Context, fields ...zap.Field) *zap.Logger {
 	var ctxLoggerItf interface{}
 	if gc, ok := c.(*gin.Context); ok {
 		ctxLoggerItf, _ = gc.Get(string(CtxLoggerName))
-		if len(fields) == 0 {
+		if len(fields) == 0 && gc.Request != nil {
 			fields = append(fields,
-				zap.String("ClientIP", gc.ClientIP()),
+				zap.String("ClientIP", SafeClientIP(gc)),
 				zap.String("RequestURI", gc.Request.RequestURI),
 			)
 		}
@@ -101,4 +102,20 @@ func NewCtxLogger(c context.Context, logger *zap.Logger, traceID string) (contex
 	// set traceID in context.Context
 	c = context.WithValue(c, TraceIDKeyname, traceID)
 	return c, ctxLogger
+}
+
+// SafeClientIP 安全地获取客户端 IP，避免 nil engine 导致的 panic
+func SafeClientIP(gc *gin.Context) string {
+	if gc == nil || gc.Request == nil {
+		return "unknown"
+	}
+
+	// 使用 recover 来捕获可能的 panic
+	defer func() {
+		if err := recover(); err != nil {
+			log.Printf("Panic when calling ClientIP: %v", err)
+		}
+	}()
+
+	return gc.ClientIP()
 }
