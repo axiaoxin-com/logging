@@ -4,11 +4,13 @@ package logging
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/axiaoxin-com/goutils"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 )
 
@@ -82,7 +84,11 @@ func (g GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 	logger := g.CtxLogger(ctx)
 	switch {
 	case err != nil:
-		logger.Error("sql: "+sql, zap.Float64("latency", latency), zap.Int64("rows", rows), zap.String("error", err.Error()))
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			logger.Warn("sql: "+sql, zap.Float64("latency", latency), zap.Int64("rows", rows), zap.String("error", err.Error()))
+		} else {
+			logger.Error("sql: "+sql, zap.Float64("latency", latency), zap.Int64("rows", rows), zap.String("error", err.Error()))
+		}
 	case g.slowThreshold != 0 && latency > g.slowThreshold.Seconds():
 		logger.Warn("sql: "+sql, zap.Float64("latency", latency), zap.Int64("rows", rows), zap.Float64("threshold", g.slowThreshold.Seconds()))
 	default:
